@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/HugNet.iml" filepath="$PROJECT_DIR$/.idea/HugNet.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/hugnet.iml" filepath="$PROJECT_DIR$/.idea/hugnet.iml" />
     </modules>
   </component>
 </project>

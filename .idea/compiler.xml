@@ -25,6 +25,7 @@
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
       <module name="activity-service" options="-parameters" />
       <module name="gateway" options="-parameters" />
+      <module name="hugnet" options="-parameters" />
       <module name="user-service" options="-parameters" />
     </option>
   </component>
