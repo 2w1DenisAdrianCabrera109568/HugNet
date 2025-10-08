@@ -2,6 +2,8 @@ package com.hugnet.user_service.entity;
 
 public enum Rol {
     ADMIN,
+    COORDINADOR,
     USUARIO,
-    COORDINADOR
+    DONATION_MANAGER,
+    SPONSOR
 }

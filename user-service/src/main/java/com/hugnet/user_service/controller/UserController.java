@@ -1,6 +1,9 @@
 package com.hugnet.user_service.controller;
 
 
+import com.hugnet.user_service.DTO.CreateUserDTO;
+import com.hugnet.user_service.DTO.LoginRequestDTO;
+import com.hugnet.user_service.DTO.UserDTO;
 import com.hugnet.user_service.entity.User;
 import com.hugnet.user_service.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -17,31 +20,47 @@ public class UserController {
 
     private final UserService userService;
 
-    // Registration endpoint
+    // Endpoint for user registration
     @PostMapping("/register")
-    public ResponseEntity<User> register(@RequestBody User user) {
-        return ResponseEntity.ok(userService.registerUser(user));
+    public ResponseEntity<UserDTO> register(@RequestBody CreateUserDTO dto) {
+        return ResponseEntity.ok(userService.register(dto));
     }
 
-    // Login endpoint
+    // Endpoint for user login
     @PostMapping("/login")
-    public ResponseEntity<User> login(@RequestParam String email, @RequestParam String password) {
-        return userService.login(email, password)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.status(401).build());
+    public ResponseEntity<UserDTO> login(@RequestBody LoginRequestDTO req) {
+        return ResponseEntity.ok(userService.login(req.getEmail(), req.getPassword()));
     }
 
-    // Get all users endpoint
-    @GetMapping("/all")
-    public ResponseEntity<List<User>> getAll() {
-        return ResponseEntity.ok(userService.findAllUsers());
+    //GET users by role
+    @GetMapping("/role/{rol}")
+    public ResponseEntity<List<UserDTO>> getByRol(@PathVariable String rol) {
+        return ResponseEntity.ok(userService.getByRol(rol));
     }
 
-    // Get user by ID endpoint
+    //GET all users
+    @GetMapping
+    public ResponseEntity<List<UserDTO>> getAll() {
+        return ResponseEntity.ok(userService.getAll());
+    }
+
+    //GET user by ID
     @GetMapping("/{id}")
-    public ResponseEntity<User> getById(@PathVariable Long id) {
-        return userService.findById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<UserDTO> getById(@PathVariable Long id) {
+        return ResponseEntity.ok(userService.getById(id));
     }
+
+    //PUT update user
+    @PutMapping("/{id}")
+    public ResponseEntity<UserDTO> update(@PathVariable Long id, @RequestBody UserDTO dto) {
+        return ResponseEntity.ok(userService.update(id, dto));
+    }
+
+    //DELETE user by ID
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
+        userService.delete(id);
+        return ResponseEntity.noContent().build();
+    }
+
 }
