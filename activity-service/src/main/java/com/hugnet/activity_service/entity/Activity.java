@@ -15,15 +15,25 @@ public class Activity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "activity_id")
     private Long activityId;
 
+    @Column(nullable = false)
     private String titulo;
-    private String descripcion;
+
+
+    @Column(name = "description")
+    private String description;
+
+    @Column(name = "fecha_inicio")
     private LocalDate fechaInicio;
+
+    @Column(name = "fecha_fin")
     private LocalDate fechaFin;
 
     @Enumerated(EnumType.STRING)
-    private TipoActividad tipo;
+    private TipoActividad tipoActividad;
 
+    @Column(name = "coordinador_id")
     private Long coordinadorId;
 }
