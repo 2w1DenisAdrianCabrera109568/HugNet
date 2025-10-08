@@ -1,12 +1,17 @@
 package com.hugnet.activity_service.service;
 
+import com.hugnet.activity_service.DTO.*;
 import com.hugnet.activity_service.entity.Activity;
 
 import java.util.*;
 
 public interface ActivityService {
-    Activity createActivity(Activity activity);
-    List<Activity> getAllActivities();
-    List<Activity> getActivitiesByCoordinator(Long id);
-    Optional<Activity> getActivityById(Long id);
+    List<ActivityDTO> getAll();
+    ActivityDTO getById(Long id);
+    ActivityDTO create(CreateActivityDTO dto);
+    ActivityDTO update(Long id, CreateActivityDTO dto);
+    void delete(Long id);
+    List<ActivityDTO> getByCoordinator(Long coordinatorId);
+    List<Long> getParticipants(Long activityId);
+    void joinActivity(Long activityId, Long userId);
 }
