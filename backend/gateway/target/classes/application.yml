@@ -4,15 +4,16 @@ spring:
 
     cloud:
         gateway:
-        routes:
-          - id: user-service
-            uri: http://user-service:8081
-            predicates:
+          mvc:
+            routes:
+              - id: user-service
+                uri: http://user-service:8081
+                predicates:
                 - Path=/api/users/**
-          - id: activity-service
-            uri: http://activity-service:8082
-            predicates:
-                - Path=/api/activity/**
+              - id: activity-service
+                uri: http://activity-service:8082
+                predicates:
+                  - Path=/api/activity/**
 
         discovery:
         locator:
