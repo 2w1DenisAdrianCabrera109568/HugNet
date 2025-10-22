@@ -2,8 +2,12 @@ spring:
   profiles:
     active: h2
 
-##--server:
-#port: 8081
+server:
+port: 8081
+
+# Clave secreta para firmar los JWT
+jwt:
+  secret: UnaClaveSecretaMuyLargaYComplejaParaMiProyectoHugNet2025
 #
 #spring:
 #  application:

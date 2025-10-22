@@ -29,39 +29,39 @@ public class ActivityController {
         return ResponseEntity.ok(activityService.getById(id));
     }
 
-    //
+    //Create activity
     @PostMapping
     public ResponseEntity<ActivityDTO> create(@RequestBody CreateActivityDTO dto) {
-        return ResponseEntity.ok(activityService.create(dto));
+        return ResponseEntity.ok(activityService.createActivity(dto));
     }
 
-    //
+    //Update activity
     @PutMapping("/{id}")
     public ResponseEntity<ActivityDTO> update(@PathVariable Long id, @RequestBody CreateActivityDTO dto) {
-        return ResponseEntity.ok(activityService.update(id, dto));
+        return ResponseEntity.ok(activityService.updateActivity(id, dto));
     }
 
-    //
+    //Delete activity
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
-        activityService.delete(id);
+        activityService.deleteActivity(id);
         return ResponseEntity.noContent().build();
     }
 
-    //
+    //Get activities by coordinator
     @GetMapping("/coordinator/{coordinatorId}")
     public ResponseEntity<List<ActivityDTO>> getByCoordinator(@PathVariable Long coordinatorId) {
         return ResponseEntity.ok(activityService.getByCoordinator(coordinatorId));
     }
 
-    //
+    //Join activity
     @PostMapping("/{id}/join/{userId}")
     public ResponseEntity<Void> join(@PathVariable Long id, @PathVariable Long userId) {
         activityService.joinActivity(id, userId);
         return ResponseEntity.ok().build();
     }
 
-    //
+    //Get participants of an activity
     @GetMapping("/{id}/participants")
     public ResponseEntity<List<Long>> participants(@PathVariable Long id) {
         return ResponseEntity.ok(activityService.getParticipants(id));

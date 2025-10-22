@@ -20,8 +20,10 @@ public class ActivityMapper {
         dto.setDescription(a.getDescription());
         dto.setTipoActividad(a.getTipoActividad());
         dto.setCoordinadorId(a.getCoordinadorId());
-        dto.setFechaInicio(a.getFechaInicio() != null ? a.getFechaInicio().toString() : null);
-        dto.setFechaFin(a.getFechaFin() != null ? a.getFechaFin().toString() : null);
+        dto.setEstado(a.getEstado());
+        dto.setFechaInicio(a.getFechaInicio());
+        dto.setFechaFin(a.getFechaFin());
+
         return dto;
     }
 
@@ -36,11 +38,14 @@ public class ActivityMapper {
         a.setDescription(dto.getDescription());
         a.setTipoActividad(dto.getTipoActividad());
         a.setCoordinadorId(dto.getCoordinadorId());
-        if (dto.getFechaInicio() != null && !dto.getFechaInicio().isEmpty())
-            a.setFechaInicio(LocalDate.parse(dto.getFechaInicio()));
-        if (dto.getFechaFin() != null && !dto.getFechaFin().isEmpty())
-            a.setFechaFin(LocalDate.parse(dto.getFechaFin()));
+        if (dto.getFechaInicio() != null) {
+            a.setFechaInicio(dto.getFechaInicio());        }
+        if (dto.getFechaFin() != null) {
+            a.setFechaFin(dto.getFechaFin());
+        }
+
         return a;
     }
 }
+
 
