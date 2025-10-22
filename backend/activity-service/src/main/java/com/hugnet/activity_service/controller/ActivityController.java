@@ -1,7 +1,8 @@
 package com.hugnet.activity_service.controller;
 
-import com.hugnet.activity_service.DTO.ActivityDTO;
-import com.hugnet.activity_service.DTO.CreateActivityDTO;
+import com.hugnet.activity_service.dto.ActivityAttendanceDTO;
+import com.hugnet.activity_service.dto.ActivityDTO;
+import com.hugnet.activity_service.dto.CreateActivityDTO;
 import com.hugnet.activity_service.service.ActivityService;
 import lombok.*;
 import org.springframework.http.ResponseEntity;
@@ -65,6 +66,12 @@ public class ActivityController {
     @GetMapping("/{id}/participants")
     public ResponseEntity<List<Long>> participants(@PathVariable Long id) {
         return ResponseEntity.ok(activityService.getParticipants(id));
+    }
+
+    //Get attendance data for report
+    @GetMapping("/{activityId}/attendance-data")
+    public ResponseEntity<ActivityAttendanceDTO> getAttendanceDataForReport(@PathVariable Long activityId) {
+        return ResponseEntity.ok(activityService.getAttendanceData(activityId));
     }
 
 }

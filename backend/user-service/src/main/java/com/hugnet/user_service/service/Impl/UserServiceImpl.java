@@ -1,9 +1,9 @@
 package com.hugnet.user_service.service.Impl;
 
-import com.hugnet.user_service.DTO.CreateUserDTO;
-import com.hugnet.user_service.DTO.LoginResponseDTO;
-import com.hugnet.user_service.DTO.UserDTO;
-import com.hugnet.user_service.DTO.common.UserMapper;
+import com.hugnet.user_service.dto.CreateUserDTO;
+import com.hugnet.user_service.dto.LoginResponseDTO;
+import com.hugnet.user_service.dto.UserDTO;
+import com.hugnet.user_service.dto.common.UserMapper;
 import com.hugnet.user_service.config.JwtService;
 import com.hugnet.user_service.entity.Rol;
 import com.hugnet.user_service.entity.User;
@@ -11,16 +11,10 @@ import com.hugnet.user_service.exceptions.ResourceNotFoundException;
 import com.hugnet.user_service.repository.UserRepository;
 import com.hugnet.user_service.service.UserService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.dao.OptimisticLockingFailureException;
-import org.springframework.http.HttpStatus;
-import org.springframework.retry.annotation.Backoff;
-import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor

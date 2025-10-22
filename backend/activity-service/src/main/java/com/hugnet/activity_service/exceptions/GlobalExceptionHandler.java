@@ -1,7 +1,6 @@
 package com.hugnet.activity_service.exceptions;
 
-import com.hugnet.activity_service.DTO.common.ErrorHandle;
-import com.hugnet.activity_service.exceptions.ResourceNotFoundException;
+import com.hugnet.activity_service.dto.common.ErrorHandle;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;

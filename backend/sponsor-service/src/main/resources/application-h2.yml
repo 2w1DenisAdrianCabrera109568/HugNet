@@ -20,4 +20,4 @@ spring:
       ddl-auto: none # Desactivamos la creación automática de tablas para usar nuestro schema.sql
   sql:
     init:
-      mode: a
+      mode: always

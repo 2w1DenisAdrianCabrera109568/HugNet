@@ -1,7 +1,7 @@
 package com.hugnet.user_service.controller;
 
 
-import com.hugnet.user_service.DTO.*;
+import com.hugnet.user_service.dto.*;
 import com.hugnet.user_service.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

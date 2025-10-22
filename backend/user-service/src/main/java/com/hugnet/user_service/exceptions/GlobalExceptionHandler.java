@@ -1,6 +1,6 @@
 package com.hugnet.user_service.exceptions;
 
-import com.hugnet.user_service.DTO.common.ErrorHandle;
+import com.hugnet.user_service.dto.common.ErrorHandle;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;

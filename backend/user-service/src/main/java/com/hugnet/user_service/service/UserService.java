@@ -1,8 +1,8 @@
 package com.hugnet.user_service.service;
 
-import com.hugnet.user_service.DTO.CreateUserDTO;
-import com.hugnet.user_service.DTO.LoginResponseDTO;
-import com.hugnet.user_service.DTO.UserDTO;
+import com.hugnet.user_service.dto.CreateUserDTO;
+import com.hugnet.user_service.dto.LoginResponseDTO;
+import com.hugnet.user_service.dto.UserDTO;
 
 import java.util.List;
 

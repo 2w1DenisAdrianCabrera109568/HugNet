@@ -1,6 +1,6 @@
 package com.hugnet.activity_service.service;
 
-import com.hugnet.activity_service.DTO.*;
+import com.hugnet.activity_service.dto.*;
 import com.hugnet.activity_service.entity.ActivityStatus;
 
 import java.util.*;
@@ -15,4 +15,5 @@ public interface ActivityService {
     List<Long> getParticipants(Long activityId);
     void joinActivity(Long activityId, Long userId);
     void updateStatus(Long activityId, ActivityStatus newStatus);
+    ActivityAttendanceDTO getAttendanceData(Long activityId);
 }

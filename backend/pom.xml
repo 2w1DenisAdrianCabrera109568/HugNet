@@ -13,6 +13,7 @@
         <module>activity-service</module>
         <module>gateway</module>
         <module>sponsor-service</module>
+        <module>report-service</module>
 
     </modules>
     <dependencies>

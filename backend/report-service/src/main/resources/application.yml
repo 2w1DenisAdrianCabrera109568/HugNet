@@ -1,0 +1,33 @@
+server:
+  port: 8084 # Asigna un puerto único
+
+spring:
+  profiles:
+    active: h2
+
+# --- Perfil específico para H2 ---
+---
+spring:
+  config:
+    activate:
+      on-profile: h2
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+  datasource:
+    url: jdbc:h2:mem:reportdb # Base de datos en memoria
+    driverClassName: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: none
+  sql:
+    init:
+      mode: always # Ejecuta los scripts
+
+# Clave secreta de JWT (debe ser la misma que en los otros servicios)
+jwt:
+  secret: VW5hQ2xhdmVTZWNyZXRhTXV5TGFyZ2FZQ29tcGxlamFQYXJhTWlQcm95ZWN0b0h1Z05ldDIwMjU=

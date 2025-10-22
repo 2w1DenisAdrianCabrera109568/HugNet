@@ -1,7 +1,7 @@
 package com.hugnet.activity_service.service.impl;
 
-import com.hugnet.activity_service.DTO.*;
-import com.hugnet.activity_service.DTO.common.ActivityMapper;
+import com.hugnet.activity_service.dto.*;
+import com.hugnet.activity_service.dto.common.ActivityMapper;
 import com.hugnet.activity_service.entity.Activity;
 import com.hugnet.activity_service.entity.ActivityParticipant;
 import com.hugnet.activity_service.entity.ActivityParticipantId;
@@ -10,11 +10,9 @@ import com.hugnet.activity_service.exceptions.ResourceNotFoundException;
 import com.hugnet.activity_service.repository.ActivityParticipantRepository;
 import com.hugnet.activity_service.repository.ActivityRepository;
 import com.hugnet.activity_service.service.ActivityService;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -108,5 +106,23 @@ public class ActivityServiceImpl implements ActivityService {
         // 3. Actualizamos el estado y guardamos.
         activity.setEstado(newStatus);
         repo.save(activity);
+    }
+
+    //GET ATTENDANCE DATA FOR AN ACTIVITY
+    @Override
+    @Transactional(readOnly = true)
+    public ActivityAttendanceDTO getAttendanceData(Long activityId) {
+        // 1. Buscar la actividad
+        Activity activity = repo.findById(activityId)
+                .orElseThrow(() -> new ResourceNotFoundException("Actividad no encontrada con ID: " + activityId));
+        List<Long> participantIds = this.getParticipants(activityId);
+
+        // 3. Construir y devolver el DTO
+        return ActivityAttendanceDTO.builder()
+                .activityId(activity.getActivityId())
+                .activityTitle(activity.getTitulo())
+                .participantUserIds(participantIds)
+                .totalParticipants(participantIds.size())
+                .build();
     }
 }

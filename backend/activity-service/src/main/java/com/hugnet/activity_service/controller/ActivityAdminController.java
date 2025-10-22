@@ -1,7 +1,7 @@
 package com.hugnet.activity_service.controller;
 
 
-import com.hugnet.activity_service.DTO.ActivityStatusUpdateRequest;
+import com.hugnet.activity_service.dto.ActivityStatusUpdateRequest;
 import com.hugnet.activity_service.service.ActivityService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
