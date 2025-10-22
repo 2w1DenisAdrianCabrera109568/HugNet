@@ -1,18 +1,18 @@
 package com.hugnet.user_service.service;
 
-import com.hugnet.user_service.DTO.CreateUserDTO;
-import com.hugnet.user_service.DTO.UserDTO;
-import com.hugnet.user_service.entity.User;
+import com.hugnet.user_service.dto.CreateUserDTO;
+import com.hugnet.user_service.dto.LoginResponseDTO;
+import com.hugnet.user_service.dto.UserDTO;
 
 import java.util.List;
-import java.util.Optional;
 
 public interface UserService {
-    UserDTO register(CreateUserDTO dto);
-    UserDTO login(String email, String password);
+    UserDTO registerUser(CreateUserDTO dto);
+    LoginResponseDTO loginUser(String email, String password);
     List<UserDTO> getAll();
     UserDTO getById(Long id);
-    UserDTO update(Long id, UserDTO userDTO);
-    void delete(Long id);
+    UserDTO updateUser(Long id, UserDTO userDTO);
+    void deleteUser(Long id);
     List<UserDTO> getByRol(String rol);
+    void changeUserRole(Long userId, String newRoleName);
 }

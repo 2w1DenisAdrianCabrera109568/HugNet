@@ -2,7 +2,8 @@ package com.hugnet.activity_service.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import java.time.LocalDate;
+
+import java.time.LocalDateTime;
 
 
 @Entity
@@ -26,14 +27,24 @@ public class Activity {
     private String description;
 
     @Column(name = "fecha_inicio")
-    private LocalDate fechaInicio;
+    private LocalDateTime fechaInicio;
 
     @Column(name = "fecha_fin")
-    private LocalDate fechaFin;
+    private LocalDateTime fechaFin;
 
     @Enumerated(EnumType.STRING)
-    private TipoActividad tipoActividad;
+    private ActivityTipe tipoActividad;
+
+    @Column(name = "estado_actividad")
+    @Enumerated(EnumType.STRING)
+    private ActivityStatus estado;
 
     @Column(name = "coordinador_id")
     private Long coordinadorId;
+    @PrePersist
+    public void setDefaultStatus() {
+        if (this.estado == null) {
+            this.estado = ActivityStatus.PENDIENTE;
+        }
+    }
 }

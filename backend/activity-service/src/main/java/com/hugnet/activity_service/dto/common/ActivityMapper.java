@@ -1,0 +1,50 @@
+package com.hugnet.activity_service.dto.common;
+
+import com.hugnet.activity_service.dto.ActivityDTO;
+import com.hugnet.activity_service.dto.CreateActivityDTO;
+import com.hugnet.activity_service.entity.Activity;
+import org.springframework.stereotype.Component;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Component
+public class ActivityMapper {
+
+    public ActivityDTO toDTO(Activity a) {
+        if (a == null) return null;
+        ActivityDTO dto = new ActivityDTO();
+        dto.setActivityId(a.getActivityId());
+        dto.setTitulo(a.getTitulo());
+        dto.setDescription(a.getDescription());
+        dto.setTipoActividad(a.getTipoActividad());
+        dto.setCoordinadorId(a.getCoordinadorId());
+        dto.setEstado(a.getEstado());
+        dto.setFechaInicio(a.getFechaInicio());
+        dto.setFechaFin(a.getFechaFin());
+
+        return dto;
+    }
+
+    public List<ActivityDTO> toDTOList(List<Activity> list) {
+        return list.stream().map(this::toDTO).collect(Collectors.toList());
+    }
+
+    public Activity toEntity(CreateActivityDTO dto) {
+        if (dto == null) return null;
+        Activity a = new Activity();
+        a.setTitulo(dto.getTitulo());
+        a.setDescription(dto.getDescription());
+        a.setTipoActividad(dto.getTipoActividad());
+        a.setCoordinadorId(dto.getCoordinadorId());
+        if (dto.getFechaInicio() != null) {
+            a.setFechaInicio(dto.getFechaInicio());        }
+        if (dto.getFechaFin() != null) {
+            a.setFechaFin(dto.getFechaFin());
+        }
+
+        return a;
+    }
+}
+
+

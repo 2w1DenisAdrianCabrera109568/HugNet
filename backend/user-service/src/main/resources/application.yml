@@ -1,9 +1,24 @@
 spring:
   profiles:
     active: h2
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: tu-email@gmail.com
+    # ¡MUY IMPORTANTE! Usa una "Contraseña de Aplicación", no tu contraseña real.
+    password: "tu-contraseña-de-aplicacion-de-google"
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+server:
+port: 8082
 
-##--server:
-#port: 8081
+# Clave secreta para firmar los JWT
+jwt:
+  secret: VW5hQ2xhdmVTZWNyZXRhTXV5TGFyZ2FZQ29tcGxlamFQYXJhTWlQcm95ZWN0b0h1Z05ldDIwMjU=
 #
 #spring:
 #  application:

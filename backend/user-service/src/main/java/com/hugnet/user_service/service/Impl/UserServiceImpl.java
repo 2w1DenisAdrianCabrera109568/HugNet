@@ -1,22 +1,21 @@
 package com.hugnet.user_service.service.Impl;
 
-import com.hugnet.user_service.DTO.CreateUserDTO;
-import com.hugnet.user_service.DTO.UserDTO;
-import com.hugnet.user_service.DTO.common.UserMapper;
+import com.hugnet.user_service.dto.CreateUserDTO;
+import com.hugnet.user_service.dto.LoginResponseDTO;
+import com.hugnet.user_service.dto.UserDTO;
+import com.hugnet.user_service.dto.common.UserMapper;
+import com.hugnet.user_service.config.JwtService;
+import com.hugnet.user_service.entity.Rol;
 import com.hugnet.user_service.entity.User;
+import com.hugnet.user_service.exceptions.ResourceNotFoundException;
 import com.hugnet.user_service.repository.UserRepository;
 import com.hugnet.user_service.service.UserService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.dao.OptimisticLockingFailureException;
-import org.springframework.http.HttpStatus;
-import org.springframework.retry.annotation.Backoff;
-import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
-import java.util.Optional;
+import com.hugnet.user_service.service.EmailService;
 
 @Service
 @RequiredArgsConstructor
@@ -24,39 +23,59 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository repo;
     private final UserMapper mapper;
+    private final JwtService jwtService;
+    private final EmailService emailService;
 
+    // Registro de usuario con verificación de email único
     @Override
-    public UserDTO register(CreateUserDTO dto) {
+    public UserDTO registerUser(CreateUserDTO dto) {
         repo.findByEmail(dto.getEmail()).ifPresent(u -> {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email ya registrado");
+            throw new IllegalArgumentException("El email '" + dto.getEmail() + "' ya está registrado.");
         });
         User saved = repo.save(mapper.toEntity(dto));
+        emailService.sendWelcomeEmail(saved.getEmail(), saved.getNombre());
         return mapper.toDTO(saved);
     }
 
+    // Inicio de sesión de usuario con generación de token JWT
     @Override
-    public UserDTO login(String email, String password) {
+    public LoginResponseDTO loginUser(String email, String password) {
         User user = repo.findByEmail(email)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Credenciales inválidas"));
+                .orElseThrow(() -> new IllegalArgumentException("Credenciales inválidas"));
         if (!user.getPassword().equals(password)) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Credenciales inválidas");
+            throw new IllegalArgumentException("Credenciales inválidas");
         }
-        return mapper.toDTO(user);
+        // Genera el token
+        String token = jwtService.generateToken(user);
+        // Construye y devuelve la respuesta
+        return LoginResponseDTO.builder()
+                .userId(user.getUserId())
+                .email(user.getEmail())
+                .rol(user.getRol())
+                .token(token)
+                .build();
     }
 
+
+    // Obtención de todos los usuarios
     @Override
     public List<UserDTO> getAll() {
         return mapper.toDTOList(repo.findAll());
     }
 
+    // Obtención de usuario por ID con manejo de excepción personalizada
     @Override
     public UserDTO getById(Long id) {
-        return mapper.toDTO(repo.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND)));
+        User user = repo.findById(id)
+                // ¡Refactorizado! Ahora usamos nuestra excepción personalizada.
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado con ID: " + id));
+        return mapper.toDTO(user);
     }
 
+    // Actualización de usuario con manejo de concurrencia optimista
     @Override
-    public UserDTO update(Long id, UserDTO userDTO) {
-        User existing = repo.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+    public UserDTO updateUser(Long id, UserDTO userDTO) {
+        User existing = repo.findById(id).orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado con ID: " + id));
         existing.setNombre(userDTO.getNombre());
         existing.setApellido(userDTO.getApellido());
         existing.setEmail(userDTO.getEmail());
@@ -66,14 +85,41 @@ public class UserServiceImpl implements UserService {
         return mapper.toDTO(saved);
     }
 
+    // Eliminación de usuario con verificación de existencia
     @Override
-    public void delete(Long id) {
-        if (!repo.existsById(id)) throw new ResponseStatusException(HttpStatus.NOT_FOUND);
-        repo.deleteById(id);
+    public void deleteUser(Long id) {
+        if (!repo.existsById(id)) {
 
+            throw new ResourceNotFoundException("No se puede eliminar. Usuario no encontrado con ID: " + id);
+        }
+        repo.deleteById(id);
     }
+
+    // Búsqueda de usuarios por rol
     @Override
     public List<UserDTO> getByRol(String rol) {
+
         return mapper.toDTOList(repo.findByRol(rol));
+    }
+
+    // Cambio de rol de usuario con validación
+    @Override
+    @Transactional
+    public void changeUserRole(Long userId, String newRoleName) {
+        // 1. Buscamos el usuario en la BD.
+        User userToUpdate = repo.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado con ID: " + userId));
+
+        // 2. Convertimos el String del rol al tipo Enum 'Rol'.
+        try {
+            Rol newRole = Rol.valueOf(newRoleName.toUpperCase());
+            userToUpdate.setRol(newRole);
+        } catch (IllegalArgumentException e) {
+            // Esto ocurre si el string no corresponde a ningún valor del Enum
+            throw new IllegalArgumentException("El rol '" + newRoleName + "' no es válido.");
+        }
+
+        // 3. Guardamos los cambios.
+        repo.save(userToUpdate);
     }
 }
