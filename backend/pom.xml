@@ -14,6 +14,7 @@
         <module>gateway</module>
         <module>sponsor-service</module>
         <module>report-service</module>
+        <module>donation-service</module>
 
     </modules>
     <dependencies>

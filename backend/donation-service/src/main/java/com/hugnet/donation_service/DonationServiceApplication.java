@@ -1,4 +1,4 @@
-package HugNet.donation_service;
+package com.hugnet.donation_service;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
