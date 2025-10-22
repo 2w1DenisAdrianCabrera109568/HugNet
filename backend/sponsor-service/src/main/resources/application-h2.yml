@@ -1,0 +1,23 @@
+server:
+  port: 8083
+
+spring:
+  config:
+    activate:
+      on-profile: h2
+  h2:
+    console:
+      enabled: true # Te permite acceder a la BBDD desde http://localhost:XXXX/h2-console
+      path: /h2-console
+  datasource:
+    url: jdbc:h2:mem:sponsordb # Base de datos en memoria llamada sponsordb
+    driverClassName: org.h2.Driver
+    username: sa
+    password: 123456
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: none # Desactivamos la creación automática de tablas para usar nuestro schema.sql
+  sql:
+    init:
+      mode: a

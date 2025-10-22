@@ -15,9 +15,10 @@
         <processorPath useClasspath="false">
           <entry name="$MAVEN_REPOSITORY$/org/projectlombok/lombok/1.18.40/lombok-1.18.40.jar" />
         </processorPath>
-        <module name="gateway" />
-        <module name="activity-service" />
         <module name="user-service" />
+        <module name="activity-service" />
+        <module name="gateway" />
+        <module name="sponsor-service" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
@@ -30,6 +31,7 @@
       <module name="activity-service" options="-parameters" />
       <module name="gateway" options="-parameters" />
       <module name="hugnet" options="-parameters" />
+      <module name="sponsor-service" options="-parameters" />
       <module name="user-service" options="-parameters" />
     </option>
   </component>
