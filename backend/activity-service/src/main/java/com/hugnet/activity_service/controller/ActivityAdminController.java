@@ -11,7 +11,8 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/admin/activities")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('ADMINISTRADOR')") // ¡Toda la clase solo para admins!
+@PreAuthorize("hasRole('ADMINISTRADOR')")
+
 public class ActivityAdminController {
 
     private final ActivityService activityService;

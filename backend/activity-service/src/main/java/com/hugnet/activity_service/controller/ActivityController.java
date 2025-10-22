@@ -6,6 +6,7 @@ import com.hugnet.activity_service.dto.CreateActivityDTO;
 import com.hugnet.activity_service.service.ActivityService;
 import lombok.*;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -13,7 +14,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/activities")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
+
 public class ActivityController {
 
     private final ActivityService activityService;
@@ -63,6 +64,8 @@ public class ActivityController {
     }
 
     //Get participants of an activity
+
+    @PreAuthorize("hasAnyRole('COORDINADOR', 'ADMINISTRADOR')")
     @GetMapping("/{id}/participants")
     public ResponseEntity<List<Long>> participants(@PathVariable Long id) {
         return ResponseEntity.ok(activityService.getParticipants(id));

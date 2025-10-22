@@ -1,7 +1,18 @@
 spring:
   profiles:
     active: h2
-
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: tu-email@gmail.com
+    # ¡MUY IMPORTANTE! Usa una "Contraseña de Aplicación", no tu contraseña real.
+    password: "tu-contraseña-de-aplicacion-de-google"
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
 server:
 port: 8082
 

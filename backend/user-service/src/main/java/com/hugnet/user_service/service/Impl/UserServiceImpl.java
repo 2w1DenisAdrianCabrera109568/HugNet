@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import com.hugnet.user_service.service.EmailService;
 
 @Service
 @RequiredArgsConstructor
@@ -23,6 +24,7 @@ public class UserServiceImpl implements UserService {
     private final UserRepository repo;
     private final UserMapper mapper;
     private final JwtService jwtService;
+    private final EmailService emailService;
 
     // Registro de usuario con verificación de email único
     @Override
@@ -31,6 +33,7 @@ public class UserServiceImpl implements UserService {
             throw new IllegalArgumentException("El email '" + dto.getEmail() + "' ya está registrado.");
         });
         User saved = repo.save(mapper.toEntity(dto));
+        emailService.sendWelcomeEmail(saved.getEmail(), saved.getNombre());
         return mapper.toDTO(saved);
     }
 
