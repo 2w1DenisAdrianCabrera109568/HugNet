@@ -1,9 +1,21 @@
-spring:
-  profiles:
-    active: h2
-
 server:
-port: 8083
+  port: 8083
+
+spring:
+  application:
+    name: sponsor-service
+  datasource:
+    url: jdbc:postgresql://postgres-db/hugnet_sponsors
+    username: postgres
+    password: 5511442233
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: update
+  sql:
+    init:
+      mode: never
 
 # Clave secreta para firmar los JWT
 jwt:

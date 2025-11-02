@@ -1,6 +1,32 @@
+server:
+  port: 8081
+
 spring:
-  profiles:
-    active: h2
+  application:
+        name: user-service
+
+
+  datasource:
+    url: jdbc:postgresql://postgres-db:5432/hugnet_users
+    username: postgres
+    password: 5511442233
+    driver-class-name: org.postgresql.Driver
+    jpa:
+      database-platform: org.hibernate.dialect.PostgreSQLDialect
+      hibernate:
+        # 'update' intentará crear/modificar tablas basado en tus @Entity
+        # 'create-drop' borra y crea todo cada vez que arranca (bueno para tests)
+        ddl-auto: update
+      properties:
+        hibernate:
+          format_sql: true # Opcional: formatea el SQL en la consola para que sea legible
+      show-sql: true # Opcional: muestra las consultas SQL en la consola
+    # Ya no usamos los scripts de H2
+    sql:
+      init:
+        mode: never
+
+
   mail:
     host: smtp.gmail.com
     port: 587
@@ -13,8 +39,7 @@ spring:
           auth: true
           starttls:
             enable: true
-server:
-port: 8082
+
 
 # Clave secreta para firmar los JWT
 jwt:

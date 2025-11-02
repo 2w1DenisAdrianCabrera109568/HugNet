@@ -4,7 +4,7 @@ import com.hugnet.user_service.dto.CreateUserDTO;
 import com.hugnet.user_service.dto.LoginResponseDTO;
 import com.hugnet.user_service.dto.UserDTO;
 import com.hugnet.user_service.dto.common.UserMapper;
-import com.hugnet.user_service.config.JwtService;
+import com.hugnet.user_service.config.JwtServiceUser;
 import com.hugnet.user_service.entity.Rol;
 import com.hugnet.user_service.entity.User;
 import com.hugnet.user_service.exceptions.ResourceNotFoundException;
@@ -23,7 +23,7 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository repo;
     private final UserMapper mapper;
-    private final JwtService jwtService;
+    private final JwtServiceUser jwtServiceUser;
     private final EmailService emailService;
 
     // Registro de usuario con verificación de email único
@@ -46,7 +46,7 @@ public class UserServiceImpl implements UserService {
             throw new IllegalArgumentException("Credenciales inválidas");
         }
         // Genera el token
-        String token = jwtService.generateToken(user);
+        String token = jwtServiceUser.generateToken(user);
         // Construye y devuelve la respuesta
         return LoginResponseDTO.builder()
                 .userId(user.getUserId())

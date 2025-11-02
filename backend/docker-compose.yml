@@ -1,36 +1,179 @@
 services:
-  # --- PostgreSQL para User Service ---
-  user-db:
+  # 1. El Servicio de Base de Datos
+  postgres-db:
     image: postgres:16
-    container_name: user-db
+    container_name: hugnet_postgres_db
+    healthcheck:
+      # Este comando verifica si el servidor de Postgres está aceptando conexiones
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d hugnet_users" ]
+      interval: 5s     # Revisa cada 5 segundos
+      timeout: 5s      # Si tarda más de 5s, falla
+      retries: 10      # Inténtalo 10 veces antes de marcarlo como "no saludable"
+    deploy:
+      restart_policy:
+        condition: on-failure # Solo reintenta si falla (sale con error)
+        max_attempts: 5       # Límite de 5 reintentos
+        window: 120s          # Ventana de tiempo para contar los reintentos (2 minutos)
     environment:
-      POSTGRES_DB: userdb
+
+      TZ: America/Argentina/Buenos_Aires
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      TZ: America/Buenos_Aires
+      POSTGRES_PASSWORD: 5511442233
     ports:
       - "5433:5432"
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 10s
-      timeout: 5s
     volumes:
-      - E:\BD\userdb:/var/lib/postgresql/data
+      - ./postgres-init:/docker-entrypoint-initdb.d # Para crear las BBDD
 
+      # Mapeamos la carpeta local E:/BD/ al directorio de datos de Postgres
+      - E:/BD/:/var/lib/postgresql/data
+    networks:
+      - hugnet-network
 
-
-  # --- User Service
+  # 2. Microservicios (Sin cambios)
   user-service:
     build: ./user-service
-    mem_limit: 512m
-    mem_reservation: 256m
+    container_name: user_service
+    deploy:
+      restart_policy:
+        condition: on-failure # Solo reintenta si falla (sale con error)
+        max_attempts: 5       # Límite de 5 reintentos
+        window: 120s          # Ventana de tiempo para contar los reintentos (2 minutos)
+    ports:
+      - "8081:8081"
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://product-db:5433/userdb
-      SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: postgres
-      SERVER_PORT: 8081
-      JAVA_OPTS: "-Xmx384m -Xms128m"
+      - SPRING_JPA_DATABASE_PLATFORM=org.hibernate.dialect.PostgreSQLDialect
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-db:5432/hugnet_users
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=5511442233
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - JWT_SECRET=VW5hQ2xhdmVTZWNyZXRhTXV5TGFyZ2FZQ29tcGxlamFQYXJhTWlQcm95ZWN0b0h1Z05ldDIwMjU=
     depends_on:
-      - user-db
-    ports: ["8081:8081"]
-#
+      postgres-db:
+        condition: service_healthy
+    networks:
+      - hugnet-network
+
+  activity-service:
+    build: ./activity-service
+    container_name: activity_service
+    deploy:
+      restart_policy:
+        condition: on-failure # Solo reintenta si falla (sale con error)
+        max_attempts: 5       # Límite de 5 reintentos
+        window: 120s          # Ventana de tiempo para contar los reintentos (2 minutos)
+    ports:
+      - "8082:8082"
+    environment:
+      - SPRING_JPA_DATABASE_PLATFORM=org.hibernate.dialect.PostgreSQLDialect
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-db:5432/hugnet_activities
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=5511442233
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - JWT_SECRET=VW5hQ2xhdmVTZWNyZXRhTXV5TGFyZ2FZQ29tcGxlamFQYXJhTWlQcm95ZWN0b0h1Z05ldDIwMjU=
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+    networks:
+      - hugnet-network
+
+  sponsor-service:
+    build: ./sponsor-service
+    container_name: sponsor_service
+    deploy:
+      restart_policy:
+        condition: on-failure # Solo reintenta si falla (sale con error)
+        max_attempts: 5       # Límite de 5 reintentos
+        window: 120s          # Ventana de tiempo para contar los reintentos (2 minutos)
+    ports:
+      - "8083:8083" # (o el puerto que hayas definido)
+    environment:
+      - SPRING_JPA_DATABASE_PLATFORM=org.hibernate.dialect.PostgreSQLDialect
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-db:5432/hugnet_sponsors
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=5511442233
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - JWT_SECRET=VW5hQ2xhdmVTZWNyZXRhTXV5TGFyZ2FZQ29tcGxlamFQYXJhTWlQcm95ZWN0b0h1Z05ldDIwMjU=
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+    networks:
+      - hugnet-network
+
+  donation-service:
+    build: ./donation-service
+    container_name: donation_service
+    deploy:
+      restart_policy:
+        condition: on-failure # Solo reintenta si falla (sale con error)
+        max_attempts: 5       # Límite de 5 reintentos
+        window: 120s          # Ventana de tiempo para contar los reintentos (2 minutos)
+    ports:
+      - "8085:8085"
+    environment:
+      - SPRING_JPA_DATABASE_PLATFORM=org.hibernate.dialect.PostgreSQLDialect
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-db:5432/hugnet_donations
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=5511442233
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - JWT_SECRET=VW5hQ2xhdmVTZWNyZXRhTXV5TGFyZ2FZQ29tcGxlamFQYXJhTWlQcm95ZWN0b0h1Z05ldDIwMjU=
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+    networks:
+      - hugnet-network
+
+  report-service:
+    build: ./report-service
+    container_name: report_service
+    ports:
+      - "8084:8084" # (o el puerto que hayas definido)
+    deploy:
+      restart_policy:
+        condition: on-failure
+        max_attempts: 5
+        window: 120s
+    environment:
+      - SPRING_JPA_DATABASE_PLATFORM=org.hibernate.dialect.PostgreSQLDialect
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-db:5432/hugnet_reports
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=5511442233
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - JWT_SECRET=VW5hQ2xhdmVTZWNyZXRhTXV5TGFyZ2FZQ29tcGxlamFQYXJhTWlQcm95ZWN0b0h1Z05ldDIwMjU=
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+    networks:
+      - hugnet-network
+
+  # --- 3. El Servicio de Gateway ---
+  gateway-service:
+    build: ./gateway
+    container_name: gateway
+    ports:
+      - "8080:8080" # <-- ¡Esta es la puerta de entrada principal!
+    deploy:
+      restart_policy:
+        condition: on-failure
+        max_attempts: 5
+        window: 120s
+
+    # Espera a que los servicios arranquen
+    depends_on:
+      user-service:
+        condition: service_started
+      activity-service:
+        condition: service_started
+      sponsor-service:
+        condition: service_started
+      donation-service:
+        condition: service_started
+      report-service:
+        condition: service_started
+    networks:
+      - hugnet-network
+
+# Definimos la red personalizada
+networks:
+  hugnet-network:
+    driver: bridge
+

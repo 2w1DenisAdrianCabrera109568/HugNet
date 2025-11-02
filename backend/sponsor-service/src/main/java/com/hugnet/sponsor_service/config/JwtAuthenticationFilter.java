@@ -1,6 +1,6 @@
 package com.hugnet.sponsor_service.config;
 
-// ... (otros imports)
+
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -25,7 +25,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-    private final JwtService jwtService;
+    // El nombre del servicio debe coincidir con la clase que creaste
+    private final JwtServiceValidator jwtService; // <-- OJO AQUÍ
     private final UserDetailsService userDetailsService;
 
     @Override
@@ -45,24 +46,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         final String userEmail = jwtService.extractUsername(jwt);
 
         if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            // No necesitamos todos los detalles del usuario, solo el email para el contexto.
             UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);
 
             if (jwtService.isTokenValid(jwt, userDetails)) {
-                // --- ¡AQUÍ ESTÁ LA MAGIA! ---
-                // Extraemos el rol directamente desde el token.
-                String rol = jwtService.extractRole(jwt);
-                // Creamos la lista de autoridades (roles) para Spring.
+
+                String rol = jwtService.extractRol(jwt);
                 List<SimpleGrantedAuthority> authorities = Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + rol));
 
-                // Creamos el token de autenticación CON las autoridades.
                 UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                        userDetails,
-                        null,
-                        authorities // <-- Pasamos los roles aquí
+                        userDetails, null, authorities
                 );
                 authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                // Guardamos la autenticación en el contexto de seguridad.
                 SecurityContextHolder.getContext().setAuthentication(authToken);
             }
         }

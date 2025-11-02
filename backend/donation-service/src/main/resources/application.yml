@@ -1,13 +1,21 @@
-spring:
-  application:
-    name: donation-service
-
-  profiles:
-    active: h2
-
 server:
   port: 8085
 
+spring:
+  application:
+    name: donation-service
+  datasource:
+    url: jdbc:postgresql://postgres-db/hugnet_donations
+    username: postgres
+    password: 5511442233
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: update
+  sql:
+    init:
+      mode: never
 logging:
   level:
     org.springframework: INFO
