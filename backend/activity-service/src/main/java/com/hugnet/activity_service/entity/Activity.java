@@ -41,6 +41,7 @@ public class Activity {
 
     @Column(name = "coordinador_id")
     private Long coordinadorId;
+
     @PrePersist
     public void setDefaultStatus() {
         if (this.estado == null) {

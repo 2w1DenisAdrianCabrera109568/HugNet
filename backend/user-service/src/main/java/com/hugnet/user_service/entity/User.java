@@ -29,6 +29,13 @@ public class User {
     @Column(nullable = false)
     private Rol rol;
 
+    @PrePersist
+    public void setDefaultRole() {
+        if (this.rol == null) {
+            this.rol = Rol.USUARIO;
+        }
+    }
+
     @Builder.Default
     private boolean activo = true;
 }

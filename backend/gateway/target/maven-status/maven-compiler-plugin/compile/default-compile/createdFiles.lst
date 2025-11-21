@@ -1,1 +1,7 @@
+com\hugnet\gateway\config\GatewayCorsConfig.class
+com\hugnet\gateway\config\JwtServiceValidator.class
+com\hugnet\gateway\config\AuthenticationGatewayFilterFactory$Config.class
+com\hugnet\gateway\config\RouterValidator.class
+com\hugnet\gateway\config\SecurityConfig.class
+com\hugnet\gateway\config\AuthenticationGatewayFilterFactory.class
 com\hugnet\gateway\GatewayApplication.class

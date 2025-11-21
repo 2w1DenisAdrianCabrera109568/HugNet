@@ -2,9 +2,10 @@ package com.hugnet.user_service.service.Impl;
 
 import com.hugnet.user_service.dto.CreateUserDTO;
 import com.hugnet.user_service.dto.LoginResponseDTO;
+import com.hugnet.user_service.dto.UserBasicDTO;
 import com.hugnet.user_service.dto.UserDTO;
 import com.hugnet.user_service.dto.common.UserMapper;
-import com.hugnet.user_service.config.JwtService;
+import com.hugnet.user_service.config.JwtServiceUser;
 import com.hugnet.user_service.entity.Rol;
 import com.hugnet.user_service.entity.User;
 import com.hugnet.user_service.exceptions.ResourceNotFoundException;
@@ -15,6 +16,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.stream.Collectors;
+
 import com.hugnet.user_service.service.EmailService;
 
 @Service
@@ -23,7 +26,7 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository repo;
     private final UserMapper mapper;
-    private final JwtService jwtService;
+    private final JwtServiceUser jwtServiceUser;
     private final EmailService emailService;
 
     // Registro de usuario con verificación de email único
@@ -46,7 +49,7 @@ public class UserServiceImpl implements UserService {
             throw new IllegalArgumentException("Credenciales inválidas");
         }
         // Genera el token
-        String token = jwtService.generateToken(user);
+        String token = jwtServiceUser.generateToken(user);
         // Construye y devuelve la respuesta
         return LoginResponseDTO.builder()
                 .userId(user.getUserId())
@@ -55,7 +58,6 @@ public class UserServiceImpl implements UserService {
                 .token(token)
                 .build();
     }
-
 
     // Obtención de todos los usuarios
     @Override
@@ -75,7 +77,8 @@ public class UserServiceImpl implements UserService {
     // Actualización de usuario con manejo de concurrencia optimista
     @Override
     public UserDTO updateUser(Long id, UserDTO userDTO) {
-        User existing = repo.findById(id).orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado con ID: " + id));
+        User existing = repo.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado con ID: " + id));
         existing.setNombre(userDTO.getNombre());
         existing.setApellido(userDTO.getApellido());
         existing.setEmail(userDTO.getEmail());
@@ -122,4 +125,6 @@ public class UserServiceImpl implements UserService {
         // 3. Guardamos los cambios.
         repo.save(userToUpdate);
     }
+
+    
 }

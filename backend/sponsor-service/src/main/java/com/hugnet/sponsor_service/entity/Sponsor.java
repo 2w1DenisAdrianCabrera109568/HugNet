@@ -15,8 +15,8 @@ public class Sponsor {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long sponsorId;
-
     private String nombre;
+    @Enumerated(EnumType.STRING)
     private SponsorType tipo; // Ej: "Empresa", "Particular"
     private String email;
     private String telefono;

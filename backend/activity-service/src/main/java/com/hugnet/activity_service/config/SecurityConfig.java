@@ -1,63 +1,46 @@
 package com.hugnet.activity_service.config;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-import java.util.List;
-
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
+@RequiredArgsConstructor
 public class SecurityConfig {
+
+    // 2. INYECTAMOS el filtro
+    private final JwtAuthenticationFilter jwtAuthFilter;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
-                .cors(cors -> cors.disable())
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+
+
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/h2-console/**").permitAll()
-                        .requestMatchers("/v3/api-docs/**").permitAll()
+                        // 4. CORREGIMOS la seguridad
+                        .requestMatchers("/v3/api-docs/**").permitAll() // Permitimos Swagger
                         .requestMatchers("/swagger-ui/**").permitAll()
-                        .requestMatchers("/swagger-ui.html").permitAll()
-                        .requestMatchers("/api/users/register").permitAll()
-                        .requestMatchers("/api/users/login").permitAll()
-                        .requestMatchers("/api/users/all").permitAll()
-                        .requestMatchers("/api/**").permitAll()  // Allow all API endpoints
-                        .requestMatchers("/users/**").permitAll() // Allow all user endpoints
-                        .anyRequest().permitAll()
+                        .requestMatchers("/h2-console/**").permitAll() // Permitimos H2
+
+                        .anyRequest().authenticated() // ¡TODO LO DEMÁS requiere un token!
                 )
-                .headers(headers -> headers
-                        .frameOptions(frame -> frame.disable())
-                )
-                .httpBasic(basic -> basic.disable()); // Disable basic auth popup
+                // 5. AÑADIMOS el filtro a la cadena
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
+
+                .headers(headers -> headers.frameOptions(frame -> frame.disable()));
 
         return http.build();
     }
-    @Bean
-    CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration configuration = new CorsConfiguration();
 
-        // Permite peticiones desde cualquier origen (para desarrollo)
-        configuration.setAllowedOrigins(List.of("http://127.0.0.1:5500", "http://localhost:5500"));
-
-        // Permite los métodos que usaremos (GET, POST, PATCH, etc.)
-        configuration.setAllowedMethods(List.of("GET", "POST", "PATCH", "DELETE", "PUT", "OPTIONS"));
-
-        // ¡LA CLAVE! Permite las cabeceras que el navegador envía en el "preflight"
-        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
-
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        // Aplica esta configuración a todas las rutas de tu API
-        source.registerCorsConfiguration("/**", configuration);
-
-        return source;
-    }
 }

@@ -1,1 +1,6 @@
+E:\Proyectos\2025\HugNet\backend\gateway\src\main\java\com\hugnet\gateway\config\GatewayCorsConfig.java
 E:\Proyectos\2025\HugNet\backend\gateway\src\main\java\com\hugnet\gateway\GatewayApplication.java
+E:\Proyectos\2025\HugNet\backend\gateway\src\main\java\com\hugnet\gateway\config\SecurityConfig.java
+E:\Proyectos\2025\HugNet\backend\gateway\src\main\java\com\hugnet\gateway\config\AuthenticationGatewayFilterFactory.java
+E:\Proyectos\2025\HugNet\backend\gateway\src\main\java\com\hugnet\gateway\config\RouterValidator.java
+E:\Proyectos\2025\HugNet\backend\gateway\src\main\java\com\hugnet\gateway\config\JwtServiceValidator.java

@@ -1,0 +1,44 @@
+<div class="card-body p-4">
+  <h3 class="text-primary">Contáctenos</h3>
+  <p>¿Tienes alguna duda, sugerencia o reclamo? Estamos aquí para ayudarte.</p>
+  
+  <div class="row">
+    <div class="col-md-8">
+      <form id="contact-form">
+        <div class="mb-3">
+          <label for="contact-name" class="form-label">Tu Nombre</label>
+          <input type="text" class="form-control" id="contact-name" required>
+        </div>
+        <div class="mb-3">
+          <label for="contact-email" class="form-label">Tu Correo Electrónico</label>
+          <input type="email" class="form-control" id="contact-email" required>
+        </div>
+        <div class="mb-3">
+          <label for="contact-subject" class="form-label">Asunto</label>
+          <input type="text" class="form-control" id="contact-subject" required>
+        </div>
+        <div class="mb-3">
+          <label for="contact-message" class="form-label">Mensaje</label>
+          <textarea class="form-control" id="contact-message" rows="5" required></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Enviar Mensaje</button>
+        <p id="contact-form-message" class="mt-3"></p>
+      </form>
+    </div>
+    <div class="col-md-4">
+      <h5>Información Directa</h5>
+      <p>
+        <i class="bi bi-envelope-fill me-2"></i>
+        <strong>Email de Soporte:</strong><br>
+        <a href="mailto:soporte@hugnet.com">soporte@hugnet.com</a>
+      </p>
+      <p>
+        <i class="bi bi-info-circle-fill me-2"></i>
+        <strong>Sugerencias y Reclamos:</strong><br>
+        <a href="mailto:sugerencias@hugnet.com">sugerencias@hugnet.com</a>
+      </p>
+      <hr>
+      <p>Para dudas rápidas, consulta nuestras <a href="dashboard.html?view=Preguntas%20Frecuentes">Preguntas Frecuentes</a>.</p>
+    </div>
+  </div>
+</div>

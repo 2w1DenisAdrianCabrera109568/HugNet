@@ -34,8 +34,10 @@ public class UserMapper {
                 .apellido(dto.getApellido())
                 .email(dto.getEmail())
                 .password(dto.getPassword())
-                .rol(dto.getRol())
+                //.rol(dto.getRol())
                 .activo(true)
                 .build();
     }
+
+    
 }

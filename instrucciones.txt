@@ -1,0 +1,15 @@
+Buenas, te comento, he estado trabajando en este proyecto hace un tiempo ya con otras instancias tuyas. Espero que podamos seguir progresando y poder terminarlo a tiempo. 
+
+Algunas cuestiones que debes tener encunta para el trabajo:
+
+#Debemos ir paso a paso no pasarme grandes porciones de codigo, de esta manera es mas facil llevar un control o corregir alguna cosa.
+
+#Si bien es un trabajo final de la universidad, la forma de escribir el codigo debe ser lo mas limpia posible y con comentarios en los metodos como para llevar una buena documentacion.
+
+#Si hay alguna duda sobre alguna porcion de codigo ya escrito por favor pregunta, no trates de inferir o adivinar, ya sea sobre nombres de clases o estructuras de codigo, si necesitas algun dato o codigo para realizar lo nuevo es mejor pedirlo y seguir la mismas formas.
+
+#Explicar porque se hace de una u otra forma, debes recordar que yo tambien estoy aprendiendo.
+
+#EL codigo que pases tambien debe ser lo mas apegado a la practica laboral real y siempre siguiendo las buenas practicas.
+
+#El codigo debe mantenerse lo mas simple posible.

@@ -1,63 +1,51 @@
 package com.hugnet.donation_service.config;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-import java.util.List;
-
-
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
-@EnableWebSecurity
+// @EnableWebSecurity no es necesaria si usas Spring Boot 3 y defines un SecurityFilterChain bean
+@EnableMethodSecurity(prePostEnabled = true) // Habilita @PreAuthorize
+@RequiredArgsConstructor
 public class SecurityConfig {
+
+    private final GatewayHeadersAuthenticationFilter gatewayHeadersFilter;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf.disable())
-                .cors(cors -> cors.disable())
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                // 1. Deshabilitamos CSRF (no usamos sesiones/cookies)
+                .csrf(AbstractHttpConfigurer::disable)
+
+                // 2. ¡LA CURA PARA EL 404!
+                // Deshabilitamos el login por formulario y el basic auth
+                .formLogin(AbstractHttpConfigurer::disable)
+                .httpBasic(AbstractHttpConfigurer::disable)
+
+                // 3. Política de sesión STATELESS (sin estado)
+                .sessionManagement(session ->
+                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
+
+                // 4. MÁS SEGURO: Exigimos que todas las peticiones estén autenticadas.
+                // Nuestro filtro se encargará de proveer la autenticación desde las cabeceras.
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/h2-console/**").permitAll()
-                        .requestMatchers("/v3/api-docs/**").permitAll()
-                        .requestMatchers("/swagger-ui/**").permitAll()
-                        .requestMatchers("/swagger-ui.html").permitAll()
-                        .requestMatchers("/api/users/register").permitAll()
-                        .requestMatchers("/api/users/login").permitAll()
-                        .requestMatchers("/api/users/all").permitAll()
-                        .requestMatchers("/api/**").permitAll()  // Allow all API endpoints
-                        .requestMatchers("/users/**").permitAll() // Allow all user endpoints
-                        .anyRequest().permitAll()
+                        // ¡IMPORTANTE! Permitir acceso público al Webhook de MercadoPago
+                        .requestMatchers("/api/donations/webhook/mp").permitAll()
+                        .anyRequest().authenticated()
                 )
-                .headers(headers -> headers
-                        .frameOptions(frame -> frame.disable())
-                )
-                .httpBasic(basic -> basic.disable()); // Disable basic auth popup
+
+                // 5. Añadimos nuestro filtro ANTES del filtro de login estándar (que está deshabilitado)
+                .addFilterBefore(gatewayHeadersFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
-    }
-    @Bean
-    CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration configuration = new CorsConfiguration();
-
-        // Permite peticiones desde cualquier origen (para desarrollo)
-        configuration.setAllowedOrigins(List.of("http://127.0.0.1:5500", "http://localhost:5500"));
-
-        // Permite los métodos que usaremos (GET, POST, PATCH, etc.)
-        configuration.setAllowedMethods(List.of("GET", "POST", "PATCH", "DELETE", "PUT", "OPTIONS"));
-
-        // ¡LA CLAVE! Permite las cabeceras que el navegador envía en el "preflight"
-        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
-
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        // Aplica esta configuración a todas las rutas de tu API
-        source.registerCorsConfiguration("/**", configuration);
-
-        return source;
     }
 }
