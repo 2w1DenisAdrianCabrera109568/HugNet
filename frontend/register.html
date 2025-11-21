@@ -1,84 +1,138 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>HugNet | Registro</title>
-  
+
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-  
-  <link rel="stylesheet" href="css/styles.css"> 
+  <link rel="stylesheet" href="./css/styles.css">
 </head>
-<body class="bg-light">
 
-  <div class="container vh-100 d-flex justify-content-center align-items-center">
-    <div class="card shadow-lg p-4" style="width: 26rem;">
-      <h3 class="text-center mb-4 text-primary fw-bold">Crear Cuenta</h3>
-      <p class="text-center text-muted">Únete a HugNet</p>
+<body class="bg-login">
+
+  <div class="register-container">
+    <div class="card card-login">
+      <h3 class="card-title">Crear Cuenta</h3>
+      <p class="card-subtitle">Unete a HugNet</p>
 
       <form id="registerForm" novalidate>
-        
-        <div class="row">
-          <div class="col-md-6 mb-3">
-            <label for="nombre" class="form-label">Nombre</label>
-            <input type="text" class="form-control" id="nombre" required>
-            <div class="invalid-feedback">
-              El nombre es obligatorio.
-            </div>
-          </div>
-          <div class="col-md-6 mb-3">
-            <label for="apellido" class="form-label">Apellido</label>
-            <input type="text" class="form-control" id="apellido" required>
-            <div class="invalid-feedback">
-              El apellido es obligatorio.
-            </div>
-          </div>
+
+        <div class="form-group">
+          <label for="nombre">Nombre</label>
+          <input type="text" id="nombre" class="form-input" placeholder="Tu nombre completo" required>
+          <div class="invalid-feedback">El nombre es obligatorio.</div>
         </div>
 
-        <div class="mb-3">
-          <label for="email" class="form-label">Correo electrónico</label>
-          <input type="email" class="form-control" id="email" required
-                 data-bs-toggle="popover" 
-                 data-bs-trigger="hover focus"
-                 data-bs-title="Formato de Email" 
-                 data-bs-content="Debe ser una dirección de correo válida.">
-          <div class="invalid-feedback">
-            Por favor, ingresa un email válido.
-          </div>
+        <div class="form-group">
+          <label for="apellido">Apellido</label>
+          <input type="text" id="apellido" class="form-input" placeholder="Tu apellido" required>
+          <div class="invalid-feedback">El apellido es obligatorio.</div>
         </div>
 
-        <div class="mb-3">
-          <label for="password" class="form-label">Contraseña</label>
-          <div class="input-group has-validation">
-            <input type="password" class="form-control" id="password" required
-                   data-bs-toggle="popover" 
-                   data-bs-trigger="hover focus"
-                   data-bs-title="Reglas de Contraseña" 
-                   data-bs-content="Mínimo 8, máximo 16 caracteres. Debe incluir al menos una mayúscula, una minúscula y un número.">
-            <button class="btn btn-outline-secondary" type="button" id="togglePassword">
+        <div class="form-group">
+          <label for="email">Correo electronico</label>
+          <input type="email" id="email" class="form-input" placeholder="tu@email.com" required>
+          <div class="invalid-feedback">Por favor, ingresa un email valido.</div>
+        </div>
+
+        <div class="form-group">
+          <label for="password">Contrasena</label>
+          <span class="helper-text">Minimo 8 caracteres, una mayuscula, una minuscula y un numero</span>
+          <div class="password-group">
+            <input type="password" id="password" class="form-input" placeholder="••••••••" required>
+            <button type="button" id="togglePassword" class="btn-toggle" tabindex="-1">
               <i class="bi bi-eye-slash-fill"></i>
             </button>
-            <div class="invalid-feedback">
-              La contraseña no cumple con los requisitos.
-            </div>
           </div>
+          <div class="invalid-feedback">La contrasena no cumple con los requisitos.</div>
         </div>
-        
-        <button type="submit" class="btn btn-primary w-100">Registrarse</button>
+        <div class="form-group-check">
+          <input type="checkbox" class="form-check-input" id="termsCheck" required>
+          <label class="form-check-label" for="termsCheck">
+            He leído y acepto los
+            <a href="#" data-bs-toggle="modal" data-bs-target="#termsModal">
+              Términos y Condiciones
+            </a>
+          </label>
+          <div class="invalid-feedback">Debes aceptar los términos y condiciones.</div>
+        </div>
+        <button type="submit" class="btn-login">Registrarse</button>
       </form>
 
-      <div id="registerMessage" class="mt-3 text-center small"></div>
-      
-      <p class="text-center mt-3 text-muted small">
-        ¿Ya tienes una cuenta? <a href="index.html">Inicia sesión</a>
-      </p>
+      <div id="registerMessage" class="message-error"></div>
 
+      <p class="form-footer">
+        Ya tienes una cuenta? <a href="./index.html">Inicia sesion</a>
+      </p>
+    </div>
+  </div>
+  <div class="modal fade" id="termsModal" tabindex="-1" aria-labelledby="termsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="termsModalLabel">Términos y Condiciones de HugNet</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p>Bienvenido a <strong>HugNet</strong>. Nos complace ofrecerle acceso a nuestro Servicio, sujeto a estos
+            Términos de Servicio y a nuestra Política de Privacidad.</p>
+
+          <h6>1. Aceptación de los Términos</h6>
+          [cite_start]<p>Al acceder y utilizar el Servicio, usted expresa su consentimiento, acuerdo y entendimiento de
+            los Términos de Servicio y la Política de Privacidad[cite: 34]. [cite_start]Si no está de acuerdo con los
+            Términos de Servicio o la Política de Privacidad, no utilice el Servicio[cite: 35].</p>
+
+          <h6>2. Descripción del Servicio</h6>
+          [cite_start]<p>HugNet es una plataforma digital destinada a la gestión y coordinación de actividades
+            solidarias [cite: 19][cite_start], permitiendo a los usuarios registrarse, participar en actividades,
+            realizar donaciones y ofrecer intercambios de bienes o servicios[cite: 35, 40, 69, 90].</p>
+
+          <h6>3. Operaciones Habilitadas</h6>
+          [cite_start]<p>Las operaciones habilitadas son aquellas disponibles para los usuarios registrados[cite: 38].
+            [cite_start]Estas comprenden, entre otras[cite: 39]:</p>
+          <ul>
+            [cite_start]<li>Registro, inicio de sesión y gestión de perfil[cite: 32].</li>
+            [cite_start]<li>Visualización e inscripción a actividades solidarias[cite: 40].</li>
+            [cite_start]<li>Realización de donaciones en especie y monetarias[cite: 69].</li>
+            [cite_start]<li>Publicación y solicitud de bienes o servicios para intercambio[cite: 90].</li>
+          </ul>
+          [cite_start]<p>Para operar el Servicio se requerirá que proporcione su correo electrónico y una clave
+            personal[cite: 44]. [cite_start]Esta clave es secreta e intransferible, y usted asume las consecuencias de
+            su divulgación a terceros[cite: 45].</p>
+
+          <h6>4. Costo del Servicio</h6>
+          <p>El Servicio provisto por HugNet es <strong>totalmente gratuito</strong> para todos sus roles (Usuario,
+            Coordinador, Gestor, etc.). [cite_start]No se cobrarán comisiones por el uso de la plataforma [Adaptado de
+            [cite: 50]].</p>
+
+          <h6>5. Privacidad de la Información</h6>
+          [cite_start]<p>Para utilizar los Servicios ofrecidos por HugNet, los Usuarios deberán facilitar determinados
+            datos de carácter personal[cite: 70]. [cite_start]Su información personal se procesa y almacena en
+            servidores que mantienen altos estándares de seguridad y protección[cite: 71]. HugNet no compartirá su
+            información personal con terceros sin su consentimiento explícito.</p>
+
+          <h6>6. Propiedad Intelectual</h6>
+          <p>El software de HugNet y todos los derechos de propiedad intelectual relacionados son propiedad exclusiva de
+            sus desarrolladores. [cite_start]El software en Argentina está protegido por la ley 11.723[cite: 68].</p>
+
+          <h6>7. Vigencia y Modificaciones</h6>
+          [cite_start]<p>El Usuario podrá dejar sin efecto su cuenta en cualquier momento[cite: 60]. [cite_start]HugNet
+            podrá modificar estos Términos y Condiciones, notificando a los usuarios con antelación [Adaptado de [cite:
+            62]].</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Entendido</button>
+        </div>
+      </div>
     </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>  
-  <script src="js/app.js"></script> 
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="./js/app.js"></script>
 </body>
+
 </html>

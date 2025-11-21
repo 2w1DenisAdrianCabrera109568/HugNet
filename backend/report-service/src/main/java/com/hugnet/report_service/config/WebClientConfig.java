@@ -8,9 +8,8 @@ import org.springframework.web.reactive.function.client.WebClient;
 public class WebClientConfig {
 
     @Bean
-    public WebClient activityServiceWebClient() {
-        return WebClient.builder()
-                .baseUrl("http://localhost:8082/api/activities") // URL base del activity-service
-                .build();
+    // Sin @LoadBalanced porque no usamos Eureka para resolver, usamos DNS directo de Docker
+    public WebClient.Builder webClientBuilder() {
+        return WebClient.builder();
     }
 }

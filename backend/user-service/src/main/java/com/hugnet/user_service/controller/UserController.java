@@ -3,6 +3,7 @@ package com.hugnet.user_service.controller;
 
 import com.hugnet.user_service.dto.*;
 import com.hugnet.user_service.service.UserService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -14,14 +15,13 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
-
 public class UserController {
 
     private final UserService userService;
 
     // Endpoint for user registration
     @PostMapping("/register")
-    public ResponseEntity<UserDTO> registerUser(@RequestBody CreateUserDTO dto) {
+    public ResponseEntity<UserDTO> registerUser(@Valid @RequestBody CreateUserDTO dto) {
         return ResponseEntity.ok(userService.registerUser(dto));
     }
 

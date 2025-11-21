@@ -1,0 +1,58 @@
+<div class="card-body p-4">
+  <div class="accordion" id="faqAccordion">
+
+    <div class="accordion-item">
+      <h2 class="accordion-header" id="headingOne">
+        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+          ¿Cómo creo mi usuario y clave?
+        </button>
+      </h2>
+      <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#faqAccordion">
+        <div class="accordion-body">
+          Puedes crear tu cuenta desde la página de <a href="register.html">Registro</a>. Simplemente completa tu nombre, apellido, correo electrónico y una contraseña segura (que cumpla con los requisitos indicados). Al finalizar, deberás aceptar los Términos y Condiciones.
+        </div>
+      </div>
+    </div>
+
+    <div class="accordion-item">
+      <h2 class="accordion-header" id="headingTwo">
+        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+          ¿Qué es un "Prestador" y cómo me convierto en uno?
+        </button>
+      </h2>
+      <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#faqAccordion">
+        <div class="accordion-body">
+          Un <strong>Prestador</strong> es un rol especial dentro de HugNet (añadido en el Sprint 3) que te permite publicar bienes (ej: "Apuntes") o servicios (ej: "Clases de Inglés") para intercambiar con otros miembros de la comunidad.<br><br>
+          Actualmente, la asignación del rol <strong>PRESTADOR</strong> es manejada por un <strong>ADMINISTRADOR</strong> (vía endpoint <code>PATCH /api/users/{id}/role</code>) para mantener la seguridad.
+        </div>
+      </div>
+    </div>
+
+    <div class="accordion-item">
+      <h2 class="accordion-header" id="headingThree">
+        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+          ¿Cómo funciona el Intercambio (Trueque)?
+        </button>
+      </h2>
+      <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingThree" data-bs-parent="#faqAccordion">
+        <div class="accordion-body">
+          Una vez que tienes el rol <strong>PRESTADOR</strong>, puedes publicar tus ítems (HU-08). Otros usuarios podrán ver tu publicación y "Solicitar" el intercambio (HU-09). Cuando lo solicitan, el ítem pasa a estado <strong>RESERVADO</strong>. La entrega se confirma mediante un QR (HU-11).
+        </div>
+      </div>
+    </div>
+
+    <div class="accordion-item">
+      <h2 class="accordion-header" id="headingFour">
+        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFour" aria-expanded="false" aria-controls="collapseFour">
+          ¿Cómo funcionan las Donaciones Monetarias (Sprint 4)?
+        </button>
+      </h2>
+      <div id="collapseFour" class="accordion-collapse collapse" aria-labelledby="headingFour" data-bs-parent="#faqAccordion">
+        <div class="accordion-body">
+          Las donaciones monetarias (HU-14) se gestionarán a través de una pasarela de pago segura (MercadoPago en modo Sandbox). Cuando realices una donación, se creará un link de pago. Utilizaremos Webhooks para confirmar automáticamente que el pago fue <strong>APROBADA</strong> (HU-15).
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>

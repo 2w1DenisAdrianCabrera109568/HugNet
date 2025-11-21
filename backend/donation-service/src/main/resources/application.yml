@@ -1,5 +1,5 @@
 server:
-  port: 8085
+  port: 8084
 
 spring:
   application:
@@ -23,3 +23,8 @@ logging:
 # Clave secreta para firmar los JWT
 jwt:
   secret: VW5hQ2xhdmVTZWNyZXRhTXV5TGFyZ2FZQ29tcGxlamFQYXJhTWlQcm95ZWN0b0h1Z05ldDIwMjU=
+
+# Configuración de HugNet
+mercadopago:
+  access:
+    token: APP_USR-4855517684274631-111917-b9007c1a327668180c1f3ce86f6f5b69-3003627325

@@ -1,5 +1,5 @@
 server:
-  port: 8084
+  port: 8085
 
 spring:
   application:
@@ -21,7 +21,3 @@ logging:
   level:
     org.springframework: INFO
 
-
-# Clave secreta para firmar los JWT
-jwt:
-  secret: VW5hQ2xhdmVTZWNyZXRhTXV5TGFyZ2FZQ29tcGxlamFQYXJhTWlQcm95ZWN0b0h1Z05ldDIwMjU=

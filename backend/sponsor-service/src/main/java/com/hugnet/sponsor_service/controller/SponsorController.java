@@ -2,6 +2,7 @@ package com.hugnet.sponsor_service.controller;
 
 
 
+import com.hugnet.sponsor_service.dto.AssignSponsorDTO;
 import com.hugnet.sponsor_service.dto.CreateSponsorDTO;
 import com.hugnet.sponsor_service.dto.SponsorDTO;
 import com.hugnet.sponsor_service.service.SponsorService;
@@ -24,5 +25,16 @@ public class SponsorController {
     public ResponseEntity<SponsorDTO> createSponsor(@RequestBody CreateSponsorDTO dto) {
         SponsorDTO newSponsor = sponsorService.createSponsor(dto);
         return new ResponseEntity<>(newSponsor, HttpStatus.CREATED);
+    }
+
+    @PostMapping("/{sponsorId}/assign")
+    @PreAuthorize("hasRole('COORDINADOR')") // Solo coordinadores organizan eventos
+    public ResponseEntity<String> assignSponsor(
+            @PathVariable Long sponsorId,
+            @RequestBody AssignSponsorDTO dto,
+            @RequestHeader("Authorization") String token
+    ) {
+        sponsorService.assignSponsorToActivity(sponsorId, dto, token);
+        return ResponseEntity.ok("Sponsor asignado correctamente a la actividad.");
     }
 }

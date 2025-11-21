@@ -4,40 +4,44 @@ services:
     image: postgres:16
     container_name: hugnet_postgres_db
     healthcheck:
-      # Este comando verifica si el servidor de Postgres está aceptando conexiones
       test: [ "CMD-SHELL", "pg_isready -U postgres -d hugnet_users" ]
-      interval: 5s     # Revisa cada 5 segundos
-      timeout: 5s      # Si tarda más de 5s, falla
-      retries: 10      # Inténtalo 10 veces antes de marcarlo como "no saludable"
+      interval: 5s
+      timeout: 5s
+      retries: 10
     deploy:
       restart_policy:
-        condition: on-failure # Solo reintenta si falla (sale con error)
-        max_attempts: 5       # Límite de 5 reintentos
-        window: 120s          # Ventana de tiempo para contar los reintentos (2 minutos)
+        condition: on-failure
+        max_attempts: 5
+        window: 120s
+      # --- LÍMITE DE MEMORIA AÑADIDO ---
+      resources:
+        limits:
+          memory: 512M
     environment:
-
       TZ: America/Argentina/Buenos_Aires
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: 5511442233
     ports:
       - "5433:5432"
     volumes:
-      - ./postgres-init:/docker-entrypoint-initdb.d # Para crear las BBDD
-
-      # Mapeamos la carpeta local E:/BD/ al directorio de datos de Postgres
+      - ./postgres-init:/docker-entrypoint-initdb.d
       - E:/BD/:/var/lib/postgresql/data
     networks:
       - hugnet-network
 
-  # 2. Microservicios (Sin cambios)
+  # 2. Microservicios
   user-service:
     build: ./user-service
     container_name: user_service
     deploy:
       restart_policy:
-        condition: on-failure # Solo reintenta si falla (sale con error)
-        max_attempts: 5       # Límite de 5 reintentos
-        window: 120s          # Ventana de tiempo para contar los reintentos (2 minutos)
+        condition: on-failure
+        max_attempts: 5
+        window: 120s
+      # --- LÍMITE DE MEMORIA AÑADIDO ---
+      resources:
+        limits:
+          memory: 1024M
     ports:
       - "8081:8081"
     environment:
@@ -47,6 +51,12 @@ services:
       - SPRING_DATASOURCE_PASSWORD=5511442233
       - SPRING_JPA_HIBERNATE_DDL_AUTO=update
       - JWT_SECRET=VW5hQ2xhdmVTZWNyZXRhTXV5TGFyZ2FZQ29tcGxlamFQYXJhTWlQcm95ZWN0b0h1Z05ldDIwMjU=
+      - SPRING_MAIL_HOST=sandbox.smtp.mailtrap.io
+      - SPRING_MAIL_PORT=2525
+      - SPRING_MAIL_USERNAME=4f71f8f5753e93
+      - SPRING_MAIL_PASSWORD=ce935c0a3333db
+      - SPRING_MAIL_PROPERTIES_MAIL_SMTP_AUTH=true
+      - SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE=true
     depends_on:
       postgres-db:
         condition: service_healthy
@@ -58,9 +68,13 @@ services:
     container_name: activity_service
     deploy:
       restart_policy:
-        condition: on-failure # Solo reintenta si falla (sale con error)
-        max_attempts: 5       # Límite de 5 reintentos
-        window: 120s          # Ventana de tiempo para contar los reintentos (2 minutos)
+        condition: on-failure
+        max_attempts: 5
+        window: 120s
+      # --- LÍMITE DE MEMORIA AÑADIDO ---
+      resources:
+        limits:
+          memory: 1024M
     ports:
       - "8082:8082"
     environment:
@@ -81,11 +95,15 @@ services:
     container_name: sponsor_service
     deploy:
       restart_policy:
-        condition: on-failure # Solo reintenta si falla (sale con error)
-        max_attempts: 5       # Límite de 5 reintentos
-        window: 120s          # Ventana de tiempo para contar los reintentos (2 minutos)
+        condition: on-failure
+        max_attempts: 5
+        window: 120s
+      # --- LÍMITE DE MEMORIA AÑADIDO ---
+      resources:
+        limits:
+          memory: 1024M
     ports:
-      - "8083:8083" # (o el puerto que hayas definido)
+      - "8083:8083"
     environment:
       - SPRING_JPA_DATABASE_PLATFORM=org.hibernate.dialect.PostgreSQLDialect
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-db:5432/hugnet_sponsors
@@ -104,11 +122,15 @@ services:
     container_name: donation_service
     deploy:
       restart_policy:
-        condition: on-failure # Solo reintenta si falla (sale con error)
-        max_attempts: 5       # Límite de 5 reintentos
-        window: 120s          # Ventana de tiempo para contar los reintentos (2 minutos)
+        condition: on-failure
+        max_attempts: 5
+        window: 120s
+      # --- LÍMITE DE MEMORIA AÑADIDO ---
+      resources:
+        limits:
+          memory: 1024M
     ports:
-      - "8085:8085"
+      - "8084:8084"
     environment:
       - SPRING_JPA_DATABASE_PLATFORM=org.hibernate.dialect.PostgreSQLDialect
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-db:5432/hugnet_donations
@@ -125,13 +147,17 @@ services:
   report-service:
     build: ./report-service
     container_name: report_service
-    ports:
-      - "8084:8084" # (o el puerto que hayas definido)
     deploy:
       restart_policy:
         condition: on-failure
         max_attempts: 5
         window: 120s
+      # --- LÍMITE DE MEMORIA AÑADIDO ---
+      resources:
+        limits:
+          memory: 1024M
+    ports:
+      - "8085:8085"
     environment:
       - SPRING_JPA_DATABASE_PLATFORM=org.hibernate.dialect.PostgreSQLDialect
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-db:5432/hugnet_reports
@@ -145,19 +171,49 @@ services:
     networks:
       - hugnet-network
 
-  # --- 3. El Servicio de Gateway ---
-  gateway-service:
-    build: ./gateway
-    container_name: gateway
-    ports:
-      - "8080:8080" # <-- ¡Esta es la puerta de entrada principal!
+  exchange-service:
+    build: ./exchange-service
+    container_name: exchange_service
     deploy:
       restart_policy:
         condition: on-failure
         max_attempts: 5
         window: 120s
+      # --- LÍMITE DE MEMORIA AÑADIDO ---
+      resources:
+        limits:
+          memory: 1024M
+    ports:
+      - "8086:8086"
+    environment:
+      - SPRING_JPA_DATABASE_PLATFORM=org.hibernate.dialect.PostgreSQLDialect
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-db:5432/hugnet_exchanges
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=5511442233
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+    networks:
+      - hugnet-network
 
-    # Espera a que los servicios arranquen
+  # --- 3. El Servicio de Gateway ---
+  gateway-service:
+    build: ./gateway
+    container_name: gateway
+    deploy:
+      restart_policy:
+        condition: on-failure
+        max_attempts: 5
+        window: 120s
+      # --- LÍMITE DE MEMORIA AÑADIDO ---
+      resources:
+        limits:
+          memory: 1024M
+    ports:
+      - "8080:8080"
+    environment:
+      - JWT_SECRET=VW5hQ2xhdmVTZWNyZXRhTXV5TGFyZ2FZQ29tcGxlamFQYXJhTWlQcm95ZWN0b0h1Z05ldDIwMjU=
     depends_on:
       user-service:
         condition: service_started
@@ -169,6 +225,8 @@ services:
         condition: service_started
       report-service:
         condition: service_started
+      exchange-service:
+        condition: service_started
     networks:
       - hugnet-network
 
@@ -176,4 +234,3 @@ services:
 networks:
   hugnet-network:
     driver: bridge
-

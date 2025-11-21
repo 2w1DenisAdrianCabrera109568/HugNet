@@ -1,65 +1,56 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>HugNet | Login</title>
   
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-  <link rel="stylesheet" href="css/styles.css"> </head>
-<body class="bg-light">
+  <link rel="stylesheet" href="./css/styles.css">
+</head>
+<body class="bg-login">
 
-  <div class="container vh-100 d-flex justify-content-center align-items-center">
-    <div class="card shadow-lg p-4" style="width: 24rem;">
-      <h3 class="text-center mb-4 text-primary fw-bold">HugNet</h3>
-      <p class="text-center text-muted">Plataforma Solidaria</p>
+  <div class="login-container">
+    <div class="card card-login">
+      <h3 class="card-title">HugNet</h3>
+      <p class="card-subtitle">Plataforma Solidaria</p>
 
       <form id="loginForm" novalidate>
         
-        <div class="mb-3">
-          <label for="email" class="form-label">Correo electrónico</label>
-          <input type="email" class="form-control" id="email" 
-                 placeholder="usuario@hugnet.com" required
-                 data-bs-toggle="popover" 
-                 data-bs-trigger="hover focus"
-                 data-bs-title="Formato de Email" 
-                 data-bs-content="Debe ser una dirección de correo válida (ej. usuario@dominio.com).">
-          <div class="invalid-feedback">
-            Por favor, ingresa un email válido.
-          </div>
+        <div class="form-group">
+          <label for="email">Correo electronico</label>
+          <input type="email" class="form-input" id="email" 
+                 placeholder="usuario@hugnet.com" required>
+          <div class="invalid-feedback">Por favor, ingresa un email valido.</div>
         </div>
 
-        <div class="mb-3">
-          <label for="password" class="form-label">Contraseña</label>
-          <div class="input-group has-validation">
-            <input type="password" class="form-control" id="password" 
-                   placeholder="••••••••" required
-                   data-bs-toggle="popover" 
-                   data-bs-trigger="hover focus"
-                   data-bs-title="Reglas de Contraseña" 
-                   data-bs-content="Debe tener entre 8-16 caracteres, 1 mayúscula, 1 minúscula y 1 número.">
-            <button class="btn btn-outline-secondary" type="button" id="togglePassword">
+        <div class="form-group">
+          <label for="password">Contrasena</label>
+          <span class="helper-text">8-16 caracteres, mayuscula, minuscula y numero</span>
+          <div class="password-group">
+            <input type="password" id="password" class="form-input" 
+                   placeholder="••••••••" required>
+            <button type="button" id="togglePassword" class="btn-toggle" tabindex="-1">
               <i class="bi bi-eye-slash-fill"></i>
             </button>
-            <div class="invalid-feedback">
-              Formato de contraseña incorrecto.
-            </div>
           </div>
+          <div class="invalid-feedback">Formato de contrasena incorrecto.</div>
         </div>
         
-        <button type="submit" class="btn btn-primary w-100">Ingresar</button>
+        <button type="submit" class="btn-login">Ingresar</button>
       </form>
 
-      <div id="loginMessage" class="mt-3 text-center small text-danger"></div>
+      <div id="loginMessage" class="message-error"></div>
       
-      <p class="text-center mt-3 text-muted small">
-        ¿No tienes una cuenta? <a href="register.html">Regístrate aquí</a>
+      <p class="form-footer">
+        No tienes una cuenta? <a href="./register.html">Registrate aqui</a>
       </p>
     </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  <script src="js/app.js"></script> </body>
+  <script src="./js/app.js"></script>
+</body>
 </html>

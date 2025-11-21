@@ -1,0 +1,33 @@
+server:
+  port: 8086
+
+spring:
+  application:
+    name: exchange-service
+
+  datasource:
+    # URL apuntando a la BBDD que Docker creará para este servicio
+    url: jdbc:postgresql://postgres-db:5432/hugnet_exchanges
+    username: postgres
+    password: 5511442233
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      # Usamos 'update' para que cree las tablas de la entidad Exchange
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: true
+    show-sql: true
+
+  sql:
+    init:
+      mode: never # No usamos scripts, dejamos que 'ddl-auto: update' trabaje
+
+logging:
+  level:
+    org.springframework.cloud.gateway: TRACE
+    org.springframework.web: DEBUG
+    reactor.netty: DEBUG
