@@ -53,7 +53,7 @@ public class ExchangeController {
     // --- ¡NUEVO ENDPOINT PARA HU-10! ---
     @GetMapping
     // Solo COORDINADOR y ADMIN pueden ver la lista completa
-    @PreAuthorize("hasRole('COORDINADOR') or hasRole('PRESTADOR') or hasRole('ADMINISTRADOR')")
+    @PreAuthorize("hasRole('COORDINADOR') or hasRole('PRESTADOR') or hasRole('ADMINISTRADOR') or hasRole('USUARIO')")
     public ResponseEntity<List<ExchangeDTO>> getAllExchanges(
             // @RequestParam opcionales para filtrar
             @RequestParam(required = false) Long prestadorId,
@@ -64,7 +64,7 @@ public class ExchangeController {
     }
 
     // --- ¡NUEVO ENDPOINT PARA HU-11! ---
-    @GetMapping("/confirmar/{token}")
+    @PatchMapping("/confirmar/{token}")
     // Cualquier usuario autenticado (el que escanea el QR) puede confirmar
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ExchangeDTO> confirmarEntrega(
@@ -76,5 +76,7 @@ public class ExchangeController {
         // es útil para que el frontend confirme "¡Entregado!"
         return ResponseEntity.ok(updatedExchange);
     }
+
+    
 
 }

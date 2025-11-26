@@ -20,6 +20,7 @@ public class ExchangeMapper {
         dto.setEstado(entity.getEstado());
         dto.setItemDeseado(entity.getItemDeseado());
         dto.setFechaPublicacion(entity.getFechaPublicacion());
+        dto.setTokenConfirmacion(entity.getTokenConfirmacion());
         return dto;
     }
 

@@ -13,54 +13,53 @@ const REGEX_PASSWORD = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d\S]{8,16}$/;
 // Definicion de las rutas/secciones de la app
 const APP_ROUTES = {
   DASHBOARD: { title: "Dashboard de Actividades", icon: "bi-table", loader: loadActivitiesDashboard },
-  // --- NUEVA RUTA SPRINT 3 ---
+  
+  // --- SECCIONES PRINCIPALES ---
   EXCHANGES: { title: "Intercambios", icon: "bi-arrow-left-right", loader: loadExchangePage },
-  // -------------------------
+  TU_APORTE: { title: "Tu Aporte", icon: "bi-heart-half", loader: loadDonationCardsPage }, // RENOMBRADO (Sprint 4)
+  
+  // --- SECCIONES DE GESTIÓN (Admin/Coord) ---
+  ACTIVITY_MANAGEMENT: { title: "Gestión de Actividades", icon: "bi-pencil-square", loader: loadActivitiesDashboard },
+  USER_MANAGEMENT: { title: "Gestión de Usuarios", icon: "bi-person-video3", loader: loadComingSoon },
+  DONATIONS_MANAGEMENT: { title: "Administrar Donaciones", icon: "bi-inboxes-fill", loader: fetchDonations },
+  REPORTS: { title: "Reportes", icon: "bi-clipboard-data-fill", loader: loadComingSoon },
+  
+  // --- UTILIDADES ---
+  MY_ACTIVITIES: { title: "Mis Actividades", icon: "bi-calendar-check-fill", loader: loadComingSoon },
   FAQS: { title: "Preguntas Frecuentes", icon: "bi-question-circle-fill", loader: loadFaqPage },
   ABOUT: { title: "Acerca de HugNet", icon: "bi-info-circle-fill", loader: loadAboutPage },
   CONTACT: { title: "Contacto", icon: "bi-envelope-fill", loader: loadContactPage },
-  // --------------------
-  MY_ACTIVITIES: { title: "Mis Actividades", icon: "bi-calendar-check-fill", loader: loadComingSoon },
-  USER_MANAGEMENT: { title: "Gestion de Usuarios", icon: "bi-person-video3", loader: loadComingSoon },
-  ACTIVITY_MANAGEMENT: { title: "Gestion de Actividades", icon: "bi-pencil-square", loader: loadActivitiesDashboard },
-  REPORTS: { title: "Reportes", icon: "bi-clipboard-data-fill", loader: loadComingSoon },
-  DONATIONS: { title: "Ver Donaciones", icon: "bi-box-heart-fill", loader: fetchDonations },
   PROFILE: { title: "Mi Perfil", icon: "bi-person-fill", loader: loadComingSoon },
 };
-// Rutas de utilidad (FAQs, About, Contact, Profile)
+
+// Rutas de utilidad que van al final del sidebar
 const UTILITY_ROUTE_TITLES = [APP_ROUTES.FAQS.title, APP_ROUTES.ABOUT.title, APP_ROUTES.CONTACT.title, APP_ROUTES.PROFILE.title];
 
 // Definicion de los menus por ROL
-// --- ACTUALIZADO CON SPRINT 3 (EXCHANGES y PRESTADOR) ---
 const ROLE_MENUS = {
-  ADMINISTRADOR: [APP_ROUTES.DASHBOARD, APP_ROUTES.ACTIVITY_MANAGEMENT, APP_ROUTES.EXCHANGES, APP_ROUTES.USER_MANAGEMENT, APP_ROUTES.DONATIONS, APP_ROUTES.REPORTS, APP_ROUTES.FAQS, APP_ROUTES.ABOUT, APP_ROUTES.CONTACT, APP_ROUTES.PROFILE],
+  // Admin ve todo
+  ADMINISTRADOR: [APP_ROUTES.DASHBOARD, APP_ROUTES.ACTIVITY_MANAGEMENT, APP_ROUTES.EXCHANGES, APP_ROUTES.TU_APORTE, APP_ROUTES.USER_MANAGEMENT, APP_ROUTES.DONATIONS_MANAGEMENT, APP_ROUTES.REPORTS, APP_ROUTES.FAQS, APP_ROUTES.ABOUT, APP_ROUTES.CONTACT, APP_ROUTES.PROFILE],
+  
   COORDINADOR: [APP_ROUTES.DASHBOARD, APP_ROUTES.MY_ACTIVITIES, APP_ROUTES.EXCHANGES, APP_ROUTES.REPORTS, APP_ROUTES.FAQS, APP_ROUTES.ABOUT, APP_ROUTES.CONTACT, APP_ROUTES.PROFILE],
-  DONATION_MANAGER: [APP_ROUTES.DONATIONS, APP_ROUTES.DASHBOARD, APP_ROUTES.EXCHANGES, APP_ROUTES.FAQS, APP_ROUTES.ABOUT, APP_ROUTES.CONTACT, APP_ROUTES.PROFILE],
-  USUARIO: [APP_ROUTES.DASHBOARD, APP_ROUTES.MY_ACTIVITIES, APP_ROUTES.EXCHANGES, APP_ROUTES.FAQS, APP_ROUTES.ABOUT, APP_ROUTES.CONTACT, APP_ROUTES.PROFILE],
+  
+  DONATION_MANAGER: [APP_ROUTES.DONATIONS_MANAGEMENT, APP_ROUTES.DASHBOARD, APP_ROUTES.EXCHANGES, APP_ROUTES.FAQS, APP_ROUTES.ABOUT, APP_ROUTES.CONTACT, APP_ROUTES.PROFILE],
+  
+  // Usuario ahora tiene TU_APORTE
+  USUARIO: [APP_ROUTES.DASHBOARD, APP_ROUTES.TU_APORTE, APP_ROUTES.MY_ACTIVITIES, APP_ROUTES.EXCHANGES, APP_ROUTES.FAQS, APP_ROUTES.ABOUT, APP_ROUTES.CONTACT, APP_ROUTES.PROFILE],
+  
   PRESTADOR: [APP_ROUTES.DASHBOARD, APP_ROUTES.EXCHANGES, APP_ROUTES.MY_ACTIVITIES, APP_ROUTES.FAQS, APP_ROUTES.ABOUT, APP_ROUTES.CONTACT, APP_ROUTES.PROFILE]
 };
 
-//const ROLE_MENUS = {
-//  ADMINISTRADOR: [APP_ROUTES.DASHBOARD, APP_ROUTES.ACTIVITY_MANAGEMENT, APP_ROUTES.EXCHANGES, APP_ROUTES.USER_MANAGEMENT, APP_ROUTES.DONATIONS, APP_ROUTES.REPORTS, APP_ROUTES.PROFILE],
-//  COORDINADOR: [APP_ROUTES.DASHBOARD, APP_ROUTES.MY_ACTIVITIES, APP_ROUTES.EXCHANGES, APP_ROUTES.REPORTS, APP_ROUTES.PROFILE],
-//  GESTOR_DONACIONES: [APP_ROUTES.DONATIONS, APP_ROUTES.DASHBOARD, APP_ROUTES.EXCHANGES, APP_ROUTES.PROFILE],
-//  USUARIO: [APP_ROUTES.DASHBOARD, APP_ROUTES.MY_ACTIVITIES, APP_ROUTES.EXCHANGES, APP_ROUTES.PROFILE],
-  // Nuevo Rol
-//  PRESTADOR: [APP_ROUTES.DASHBOARD, APP_ROUTES.EXCHANGES, APP_ROUTES.MY_ACTIVITIES, APP_ROUTES.PROFILE]
-//};
-
 // =========================
-// FUNCIONES AUXILIARES DE UTILIDAD
+// FUNCIONES AUXILIARES
 // =========================
 
 function getAuthHeaders() {
   const token = localStorage.getItem("token");
   if (!token) {
-    console.warn("⚠️ No hay token guardado");
-    // Usamos SweetAlert para una mejor UX
     Swal.fire({
-      title: 'Sesion Expirada',
-      text: 'Tu sesion ha expirado. Seras redirigido al login.',
+      title: 'Sesión Expirada',
+      text: 'Tu sesión ha expirado. Serás redirigido al login.',
       icon: 'warning',
       timer: 2000,
       showConfirmButton: false
@@ -81,182 +80,84 @@ function handleLogout() {
 function setupPasswordToggle(inputId, buttonId) {
   const passwordInput = document.getElementById(inputId);
   const toggleButton = document.getElementById(buttonId);
-
-  if (!passwordInput || !toggleButton) {
-    console.warn(`⚠️ No se encontro elemento: ${inputId} o ${buttonId}`);
-    return;
-  }
-
+  if (!passwordInput || !toggleButton) return;
   const icon = toggleButton.querySelector("i");
-  console.log(`✅ Toggle configurado para ${inputId}`);
-
   toggleButton.addEventListener("click", (e) => {
     e.preventDefault();
     e.stopPropagation();
-
     if (passwordInput.type === "password") {
       passwordInput.type = "text";
       if (icon) icon.className = "bi bi-eye-fill";
       toggleButton.classList.add("active");
-      console.log("👁️ Mostrar contrasena");
     } else {
       passwordInput.type = "password";
       if (icon) icon.className = "bi bi-eye-slash-fill";
       toggleButton.classList.remove("active");
-      console.log("👁️ Ocultar contrasena");
     }
   });
 }
 
 function initializePopovers() {
   try {
-    const popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
-    popoverTriggerList.map(function (popoverTriggerEl) {
-      return new bootstrap.Popover(popoverTriggerEl);
-    });
-    console.log("✅ Popovers inicializados");
-  } catch (error) {
-    console.warn("⚠️ Error al inicializar popovers:", error);
-  }
+    const list = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
+    list.map(el => new bootstrap.Popover(el));
+  } catch (error) { console.warn("⚠️ Error popovers:", error); }
 }
 
 // =========================
 // ENRUTADOR PRINCIPAL
 // =========================
 document.addEventListener("DOMContentLoaded", () => {
-  console.log("📄 DOMContentLoaded disparado");
-
   const currentPage = window.location.pathname.split("/").pop();
-  console.log("📍 Pagina actual:", currentPage);
-
-  // menu.html y dashboard.html son las paginas protegidas
   const isProtectedPage = ["menu.html", "dashboard.html"].includes(currentPage);
-
   if (isProtectedPage && !localStorage.getItem("token")) {
-    console.warn("🔒 Pagina protegida sin token, redirigiendo a index.html");
     window.location.href = "index.html";
     return;
   }
-
   switch (currentPage) {
-    case "index.html":
-    case "":
-      console.log("🔐 Inicializando pagina de LOGIN");
-      initLoginPage();
-      break;
-    case "register.html":
-      console.log("📝 Inicializando pagina de REGISTRO");
-      initRegisterPage();
-      break;
-    case "menu.html":
-      console.log("🎯 Inicializando pagina de MENU");
-      initMenuPage();
-      break;
-    case "dashboard.html":
-      console.log("📊 Inicializando pagina de DASHBOARD");
-      initDashboardPage();
-      break;
-    default:
-      console.warn("⚠️ Pagina no reconocida:", currentPage);
+    case "index.html": case "": initLoginPage(); break;
+    case "register.html": initRegisterPage(); break;
+    case "menu.html": initMenuPage(); break;
+    case "dashboard.html": initDashboardPage(); break;
   }
 });
 
 // =========================
 // LOGICA DE PAGINAS
 // =========================
-//Login Page
+
 function initLoginPage() {
   const form = document.getElementById("loginForm");
   const emailInput = document.getElementById("email");
   const passwordInput = document.getElementById("password");
   const message = document.getElementById("loginMessage");
-
-  if (!form || !emailInput || !passwordInput) {
-    console.error("❌ Elementos del formulario no encontrados");
-    return;
-  }
-
-  console.log("✅ Elementos del login encontrados");
-
+  if (!form) return;
   setupPasswordToggle("password", "togglePassword");
-  initializePopovers();
-
-  // Limpiar errores al escribir
-  [emailInput, passwordInput].forEach(input => {
-    input.addEventListener('input', () => {
-      input.classList.remove('is-invalid');
-      message.textContent = "";
-    });
-  });
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
-    console.log("📨 Formulario de login enviado");
-
     message.textContent = "";
-    let isValid = true;
-
-    // Validacion
-    if (!REGEX_EMAIL.test(emailInput.value)) {
-      console.warn("❌ Email invalido:", emailInput.value);
-      emailInput.classList.add('is-invalid');
-      isValid = false;
-    } else {
-      console.log("✅ Email valido");
-    }
-
-    if (!REGEX_PASSWORD.test(passwordInput.value)) {
-      console.warn("❌ Contrasena no cumple requisitos");
-      passwordInput.classList.add('is-invalid');
-      isValid = false;
-    } else {
-      console.log("✅ Contrasena valida");
-    }
-
-    if (!isValid) {
-      console.log("🛑 Validacion fallida");
-      return;
-    }
-
     try {
-      console.log("🌐 Enviando solicitud de login a:", `${API_URL}/users/login`);
-
       const response = await fetch(`${API_URL}/users/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: emailInput.value, password: passwordInput.value })
       });
-
-      console.log("📊 Respuesta recibida, status:", response.status);
-
       if (response.ok) {
-        const loginData = await response.json();
-        console.log("✅ Login exitoso");
-        console.log("📦 Datos recibidos:", loginData);
-
-        localStorage.setItem("token", loginData.token);
-        localStorage.setItem("userEmail", loginData.email);
-        localStorage.setItem("userRol", loginData.rol);
-        localStorage.setItem("userId", loginData.userId);
-
-        console.log("💾 Datos guardados en localStorage");
-        console.log("➡️ Redirigiendo a menu.html");
-
+        const data = await response.json();
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("userEmail", data.email);
+        localStorage.setItem("userRol", data.rol);
+        localStorage.setItem("userId", data.userId);
         window.location.href = "menu.html";
       } else {
-        const errorData = await response.json();
-        console.error("❌ Error en login:", errorData);
-        message.textContent = errorData.message || "Credenciales incorrectas.";
+        const err = await response.json();
+        message.textContent = err.message || "Credenciales incorrectas.";
       }
-    } catch (error) {
-      console.error("❌ Error en login:", error);
-      message.textContent = "Error de conexion con el servidor.";
-      console.error("Detalle del error:", error.message);
-    }
+    } catch (error) { message.textContent = "Error de conexión."; }
   });
 }
 
-// Register Page
 function initRegisterPage() {
   const form = document.getElementById("registerForm");
   const message = document.getElementById("registerMessage");
@@ -265,1023 +166,653 @@ function initRegisterPage() {
   const emailInput = document.getElementById("email");
   const passwordInput = document.getElementById("password");
   const termsCheck = document.getElementById("termsCheck");
-
-  if (!form || !nombreInput || !apellidoInput || !emailInput || !passwordInput) {
-    console.error("❌ Elementos del formulario de registro no encontrados");
-    return;
-  }
-
-  console.log("✅ Elementos del registro encontrados");
-
+  if (!form) return;
   setupPasswordToggle("password", "togglePassword");
-  initializePopovers();
-
-  // Limpiar errores al escribir
-  [nombreInput, apellidoInput, emailInput, passwordInput].forEach(input => {
-    input.addEventListener('input', () => {
-      input.classList.remove('is-invalid');
-      message.textContent = "";
-    });
-  });
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
-    console.log("📨 Formulario de registro enviado");
-
     message.textContent = "";
-    let isValid = true;
-
-    // Validacion
-    if (nombreInput.value.trim() === "") {
-      console.warn("❌ Nombre vacio");
-      nombreInput.classList.add('is-invalid');
-      isValid = false;
-    }
-    if (apellidoInput.value.trim() === "") {
-      console.warn("❌ Apellido vacio");
-      apellidoInput.classList.add('is-invalid');
-      isValid = false;
-    }
-    if (!REGEX_EMAIL.test(emailInput.value)) {
-      console.warn("❌ Email invalido:", emailInput.value);
-      emailInput.classList.add('is-invalid');
-      isValid = false;
-    }
-    if (!REGEX_PASSWORD.test(passwordInput.value)) {
-      console.warn("❌ Contrasena no cumple requisitos");
-      passwordInput.classList.add('is-invalid');
-      isValid = false;
-    }
-
-    if (!isValid) {
-      console.log("🛑 Validacion fallida");
-      return;
-    }
-    if (!termsCheck.checked) {
-      console.warn("❌ Términos no aceptados");
-      termsCheck.classList.add('is-invalid');
-      // Asegurarse que el feedback se muestre
-      termsCheck.nextElementSibling.nextElementSibling.style.display = 'block';
-      isValid = false;
-    } else {
-      termsCheck.classList.remove('is-invalid');
-      termsCheck.nextElementSibling.nextElementSibling.style.display = 'none';
-    }
+    if (!termsCheck.checked) { termsCheck.classList.add('is-invalid'); return; }
 
     try {
-      console.log("🌐 Enviando solicitud de registro a:", `${API_URL}/users/register`);
-
-      // --- REFACTORIZADO ---
-      // Se elimino "rol: 'USUARIO'" del body.
-      // El backend ahora asigna el rol por defecto (mas seguro).
       const response = await fetch(`${API_URL}/users/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          nombre: nombreInput.value,
-          apellido: apellidoInput.value,
-          email: emailInput.value,
-          password: passwordInput.value
+          nombre: nombreInput.value, apellido: apellidoInput.value,
+          email: emailInput.value, password: passwordInput.value
         })
       });
-
-      console.log("📊 Respuesta recibida, status:", response.status);
-
       if (response.ok) {
-        console.log("✅ Registro exitoso");
-        Swal.fire({
-          title: '¡Registro Exitoso!',
-          text: 'Tu cuenta ha sido creada. Seras redirigido al login.',
-          icon: 'success',
-          timer: 2500,
-          showConfirmButton: false
-        }).then(() => {
-          window.location.href = "index.html";
-        });
+        Swal.fire({ title: '¡Registro Exitoso!', icon: 'success', timer: 2000, showConfirmButton: false })
+            .then(() => window.location.href = "index.html");
       } else {
-        // Manejo de error de validacion del backend
-        const errorData = await response.json();
-        console.error("❌ Error en registro:", errorData);
-        if (errorData.errors) {
-          const errorMessages = errorData.errors.map(err => `${err.field}: ${err.message}`).join('\n');
-          message.textContent = errorMessages;
-        } else {
-          message.textContent = errorData.message || "Error en el registro. (El email ya puede estar en uso)";
-        }
+        const err = await response.json();
+        message.textContent = err.message || "Error en registro.";
       }
-    } catch (error) {
-      console.error("❌ Error en registro:", error);
-      message.className = "mt-3 text-center small text-danger";
-      message.textContent = "Error de conexion con el servidor.";
-    }
+    } catch (error) { message.textContent = "Error de conexión."; }
   });
 }
 
-// Menu Page
 function initMenuPage() {
-  const userEmail = localStorage.getItem("userEmail");
   const userRol = localStorage.getItem("userRol");
-
-  console.log("👤 Usuario:", userEmail, "Rol:", userRol);
-
-  const userNameElement = document.getElementById("userName");
+  const userName = document.getElementById("userName");
   const logoutBtn = document.getElementById("logoutBtn");
+  if (userName) userName.textContent = localStorage.getItem("userEmail");
+  if (logoutBtn) logoutBtn.addEventListener("click", handleLogout);
 
-  if (userNameElement) {
-    userNameElement.textContent = userEmail || "Usuario";
-  }
+  const container = document.getElementById("menu-options");
+  if (!container) return;
 
-  if (logoutBtn) {
-    logoutBtn.addEventListener("click", handleLogout);
-  }
+  const items = ROLE_MENUS[userRol];
+  if (!items) { container.innerHTML = '<p class="alert alert-warning">Rol no reconocido.</p>'; return; }
 
-  const menuContainer = document.getElementById("menu-options");
-  if (!menuContainer) {
-    console.error("❌ Contenedor de menu no encontrado");
-    return;
-  }
-
-  menuContainer.innerHTML = ""; // Limpiamos el contenedor
-
-  // Usamos el ROL para obtener las opciones de menu
-  const menuItems = ROLE_MENUS[userRol];
-
-  if (!menuItems || menuItems.length === 0) {
-    console.warn(`⚠️ Rol invalido o no encontrado: ${userRol}`);
-    menuContainer.innerHTML = '<p class="alert alert-warning">No tienes permisos para ver este menu.</p>';
-    return;
-  }
-
-  console.log(`✅ Mostrando ${menuItems.length} opciones de menu para rol: ${userRol}`);
-
-  // Creamos los botones del menu dinamicamente
-  menuItems.forEach((item, index) => {
-    const button = document.createElement("a");
-    // Todos los botones llevan al dashboard, pero con un parametro "view"
-    button.href = `dashboard.html?view=${encodeURIComponent(item.title)}`;
-    button.className = `btn btn-lg ${index === 0 ? 'btn-primary' : 'btn-outline-primary'}`;
-    button.innerHTML = `<i class="bi ${item.icon} me-2"></i> ${item.title}`;
-    menuContainer.appendChild(button);
+  container.innerHTML = "";
+  items.forEach((item, index) => {
+    const btn = document.createElement("a");
+    btn.href = `dashboard.html?view=${encodeURIComponent(item.title)}`;
+    btn.className = `btn btn-lg ${index === 0 ? 'btn-primary' : 'btn-outline-primary'}`;
+    btn.innerHTML = `<i class="bi ${item.icon} me-2"></i> ${item.title}`;
+    container.appendChild(btn);
   });
 }
 
-// Dashboard Page
+// =========================
+// DASHBOARD LOGIC
+// =========================
+
 function initDashboardPage() {
-  const userEmail = localStorage.getItem("userEmail");
   const userRol = localStorage.getItem("userRol");
-
-  console.log("📊 Dashboard - Usuario:", userEmail, "Rol:", userRol);
-
-  // 1. Configurar Info de Usuario y Logout
-  const userNameElement = document.getElementById("userName");
+  const userName = document.getElementById("userName");
   const logoutBtn = document.getElementById("logoutBtn");
+  if (userName) userName.textContent = localStorage.getItem("userEmail");
+  if (logoutBtn) logoutBtn.addEventListener("click", handleLogout);
 
-  if (userNameElement) {
-    userNameElement.textContent = userEmail || "Usuario";
-  }
+  const nav = document.getElementById("sidebar-nav");
+  const utilNav = document.getElementById("sidebar-utility-nav");
+  if (!nav) return;
+  nav.innerHTML = ""; if (utilNav) utilNav.innerHTML = "";
 
-  if (logoutBtn) {
-    logoutBtn.addEventListener("click", handleLogout);
-  }
-
-  // 2. Construir la Barra Lateral (Sidebar)
-  const navContainer = document.getElementById("sidebar-nav");
-  const utilityNavContainer = document.getElementById("sidebar-utility-nav"); // Nueva lista
-
-  if (!navContainer || !utilityNavContainer) {
-    console.error("❌ Contenedor de navegacion (principal o utilidad) no encontrado");
-    return;
-  }
-
-  navContainer.innerHTML = ""; // Limpiar lista principal
-  utilityNavContainer.innerHTML = ""; // Limpiar lista de utilidad
-
-  // --- !! LÍNEA CORREGIDA (Estaba faltando en la nueva lógica) !! ---
-  const menuItems = ROLE_MENUS[userRol];
-  // ------------------------------------------------------------------
-
-  if (!menuItems || menuItems.length === 0) {
-    console.warn(`⚠️ Rol invalido o no encontrado: ${userRol}`);
-    navContainer.innerHTML = '<li class="alert alert-warning">No tienes permisos para acceder.</li>';
-    return;
-  }
-
-  // Filtramos los items en dos listas separadas
-  const mainMenuItems = menuItems.filter(item => !UTILITY_ROUTE_TITLES.includes(item.title));
-  const utilityMenuItems = menuItems.filter(item => UTILITY_ROUTE_TITLES.includes(item.title));
-
-  console.log(`✅ Configurando sidebar con ${mainMenuItems.length} items principales y ${utilityMenuItems.length} de utilidad`);
-
-  // --- Helper para no repetir código ---
-  const createNavLink = (item) => {
-    const li = document.createElement("li");
-    li.className = "nav-item";
-
-    const link = document.createElement("a");
-    link.href = `?view=${encodeURIComponent(item.title)}`;
-    link.className = "nav-link text-white";
-    link.innerHTML = `<i class="bi ${item.icon} me-2"></i> ${item.title}`;
-
-    // Event listener para cargar contenido
-    link.onclick = async (e) => {
+  const items = ROLE_MENUS[userRol] || [];
+  const createLi = (item) => {
+    const li = document.createElement("li"); li.className = "nav-item";
+    const a = document.createElement("a");
+    a.href = `?view=${encodeURIComponent(item.title)}`;
+    a.className = "nav-link text-white";
+    a.innerHTML = `<i class="bi ${item.icon} me-2"></i> ${item.title}`;
+    a.onclick = async (e) => {
       e.preventDefault();
-      console.log("📌 Clickeado:", item.title);
-
-      // Resaltar link activo (busca en *AMBAS* listas)
-      document.querySelectorAll("#sidebar-nav .nav-link, #sidebar-utility-nav .nav-link").forEach(l => l.classList.remove("active"));
-      link.classList.add("active");
-
-      // Cargar el contenido de la vista
+      document.querySelectorAll(".nav-link").forEach(l => l.classList.remove("active"));
+      a.classList.add("active");
       await item.loader(item.title);
-      // Actualizar la URL (sin recargar)
       window.history.pushState(null, '', `dashboard.html?view=${encodeURIComponent(item.title)}`);
     };
-
-    li.appendChild(link);
-    return li;
+    li.appendChild(a); return li;
   };
-  // --- Fin del Helper ---
 
-  // 1. Llenar la navegación principal
-  mainMenuItems.forEach((item) => {
-    navContainer.appendChild(createNavLink(item));
+  items.forEach(item => {
+    if (UTILITY_ROUTE_TITLES.includes(item.title)) {
+       if (utilNav) { const li = createLi(item); li.querySelector('a').classList.add('small'); utilNav.appendChild(li); }
+    } else { nav.appendChild(createLi(item)); }
   });
 
-  // 2. Llenar la navegación de utilidad
-  utilityMenuItems.forEach((item) => {
-    const navLinkLi = createNavLink(item);
+  const params = new URLSearchParams(window.location.search);
+  const viewParam = params.get('view');
+  let viewToLoad = items[0];
+  if (viewParam) { const found = items.find(i => i.title === viewParam); if (found) viewToLoad = found; }
 
-    // Hacemos el texto más pequeño, como pediste
-    navLinkLi.querySelector('a').classList.add('small');
-
-    utilityNavContainer.appendChild(navLinkLi);
-  });
-
-  // --- !! AQUÍ SE ELIMINÓ EL BLOQUE "back up to previous version" QUE CAUSABA EL ERROR !! ---
-
-  // 3. Cargar la Vista Correcta (segun URL)
-  const urlParams = new URLSearchParams(window.location.search);
-  const view = urlParams.get('view');
-
-  let viewToLoad = menuItems[0]; // Vista por defecto (la primera del rol)
-
-  if (view) {
-    const foundView = menuItems.find(item => item.title === view);
-    if (foundView) viewToLoad = foundView;
+  if (viewToLoad) {
+    viewToLoad.loader(viewToLoad.title);
+    setTimeout(() => {
+        const active = document.querySelector(`a[href="?view=${encodeURIComponent(viewToLoad.title)}"]`);
+        if (active) active.classList.add("active");
+    }, 100);
   }
-
-  console.log("🔄 Cargando vista:", viewToLoad.title);
-  viewToLoad.loader(viewToLoad.title); // Carga el contenido
-
-  // Resalta el link activo en la barra lateral
-  // --- CORREGIDO para buscar en AMBAS listas ---
-  const activeLink = document.querySelector(`#sidebar-nav a[href="?view=${encodeURIComponent(viewToLoad.title)}"], #sidebar-utility-nav a[href="?view=${encodeURIComponent(viewToLoad.title)}"]`);
-  if (activeLink) activeLink.classList.add("active");
-
-  // 4. LOGICA DE TOGGLE (MOVIDA DESDE dashboard.html)
-  // Esto garantiza que los botones se encuentren DESPUES de crear los links
   setupMobileSidebarToggle();
 }
 
-//Mobile Sidebar Toggle
 function setupMobileSidebarToggle() {
   const sidebar = document.getElementById('sidebar');
   const openBtn = document.getElementById('openSidebarBtn');
   const closeBtn = document.getElementById('closeSidebarBtn');
-  const mainContent = document.getElementById('main-content');
-  const sidebarLinks = document.querySelectorAll('#sidebar-nav a');
-
-  // Abrir sidebar
-  if (openBtn) {
-    openBtn.addEventListener('click', () => sidebar.classList.add('show'));
-  }
-
-  // Cerrar sidebar
-  if (closeBtn) {
-    closeBtn.addEventListener('click', () => sidebar.classList.remove('show'));
-  }
-
-  // Cerrar sidebar al hacer click en un enlace del menu (en moviles)
-  sidebarLinks.forEach(link => {
-    link.addEventListener('click', () => {
-      if (window.innerWidth <= 768) {
-        sidebar.classList.remove('show');
-      }
-    });
+  const main = document.getElementById('main-content');
+  if (openBtn) openBtn.addEventListener('click', () => sidebar.classList.add('show'));
+  if (closeBtn) closeBtn.addEventListener('click', () => sidebar.classList.remove('show'));
+  if (main) main.addEventListener('click', () => { if (window.innerWidth <= 768) sidebar.classList.remove('show'); });
+  document.querySelectorAll('#sidebar-nav a').forEach(l => {
+      l.addEventListener('click', () => { if (window.innerWidth <= 768) sidebar.classList.remove('show'); });
   });
-
-  // Cerrar sidebar si se hace click fuera de el (en moviles)
-  if (mainContent) {
-    mainContent.addEventListener('click', () => {
-      if (window.innerWidth <= 768) {
-        sidebar.classList.remove('show');
-      }
-    });
-  }
-  console.log("✅ Toggle de sidebar movil configurado");
-}
-
-
-// =========================
-// FUNCIONES DE CARGA DE CONTENIDO
-// =========================
-
-async function loadActivitiesDashboard(title) {
-  const contentTitle = document.getElementById("content-title");
-  const contentArea = document.getElementById("content-area");
-
-  contentTitle.textContent = title;
-  // Esqueleto de la tabla
-  contentArea.innerHTML = `
-    <div class="card-body p-4">
-      <div class="table-responsive">
-        <table class="table table-striped table-hover align-middle text-center">
-          <thead class="table-primary">
-            <tr>
-              <th>ID</th>
-              <th>Titulo</th>
-              <th>Tipo</th>
-              <th>Fecha</th>
-              <th>Estado</th>
-              <th>Acciones</th>
-            </tr>
-          </thead>
-          <tbody id="activityTableBody">
-            <tr><td colspan="6" class="text-muted p-4">Cargando...</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  `;
-
-  // Llama a la funcion que busca y renderiza los datos
-  await fetchActivities(document.getElementById("activityTableBody"));
-}
-
-function loadComingSoon(title) {
-  const contentTitle = document.getElementById("content-title");
-  const contentArea = document.getElementById("content-area");
-
-  contentTitle.textContent = title;
-  contentArea.innerHTML = `
-    <div class="card-body p-4 text-center">
-      <h3 class="text-muted">Proximamente...</h3>
-      <p>Esta seccion (${title}) esta en construccion.</p>
-    </div>
-  `;
 }
 
 // =========================
-// NUEVAS FUNCIONES DE CARGA (Términos, FAQs, Contacto)
+// LOADERS
 // =========================
 
-/**
- * Carga una vista parcial HTML dentro del #content-area
- * @param {string} url - La URL de la vista parcial (ej. 'partials/faq.html')
- * @param {function} [onLoadCallback] - (Opcional) Callback a ejecutar despues de inyectar el HTML
- */
-async function loadPartial(url, onLoadCallback) {
-  const contentArea = document.getElementById("content-area");
+async function loadPartial(url, cb) {
+  const area = document.getElementById("content-area");
   try {
-    const response = await fetch(url);
-    if (!response.ok) {
-      throw new Error(`Error al cargar la vista: ${response.statusText}`);
-    }
-    const html = await response.text();
-    contentArea.innerHTML = html;
-    
-    // Si se paso un callback (para inicializar JS), ejecutarlo
-    if (onLoadCallback) {
-      onLoadCallback();
-    }
-  } catch (error) {
-    console.error("Error cargando vista parcial:", error);
-    contentArea.innerHTML = `<div class="card-body p-4"><div class="alert alert-danger">${error.message}</div></div>`;
-  }
+    const res = await fetch(url);
+    if (!res.ok) throw new Error("Error vista");
+    area.innerHTML = await res.text();
+    if (cb) cb();
+  } catch (e) { area.innerHTML = `<div class="alert alert-danger">${e.message}</div>`; }
 }
 
 async function loadFaqPage(title) {
-  const contentTitle = document.getElementById("content-title");
-  contentTitle.textContent = title;
-
+  document.getElementById("content-title").textContent = title;
   await loadPartial('partials/faq.html', () => {
-    // --- ESTE ES EL ARREGLO ---
-    // El HTML ya se inyectó, pero está "muerto".
-    // Ahora, tenemos que "despertar" los componentes de Bootstrap manualmente.
-
-    console.log("Activando componentes de acordeón cargados dinámicamente...");
-
-    // 1. Buscamos todos los 'div' de contenido del acordeón que acabamos de inyectar.
-    const collapseElements = document.querySelectorAll('#faqAccordion .accordion-collapse');
-    
-    // 2. Creamos una nueva instancia de 'Collapse' de Bootstrap para CADA UNO.
-    //    Esto les añade los event listeners para que respondan a los clics.
-    collapseElements.forEach(el => {
-      new bootstrap.Collapse(el, {
-        // Le decimos que NO los abra o cierre al inicializar,
-        // solo que los prepare.
-        toggle: false 
-      });
-    });
-
-    console.log(`✅ ${collapseElements.length} items de acordeón activados.`);
+      document.querySelectorAll('.accordion-collapse').forEach(el => new bootstrap.Collapse(el, { toggle: false }));
   });
 }
-
-
 async function loadAboutPage(title) {
-  const contentTitle = document.getElementById("content-title");
-  contentTitle.textContent = title;
+  document.getElementById("content-title").textContent = title;
   await loadPartial('partials/about.html');
 }
-
 async function loadContactPage(title) {
-  const contentTitle = document.getElementById("content-title");
-  contentTitle.textContent = title;
-
-  await loadPartial('partials/contact.html', () => {
-    // Adjuntar el listener al formulario de contacto despues de cargarlo
-    const contactForm = document.getElementById('contact-form');
-    if (contactForm) {
-      contactForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const messageEl = document.getElementById('contact-form-message');
-        messageEl.textContent = '¡Gracias por tu mensaje! (Funcionalidad de envío no implementada en este demo).';
-        messageEl.className = 'text-success';
-        contactForm.reset();
-      });
-    }
-  });
+  document.getElementById("content-title").textContent = title;
+  await loadPartial('partials/contact.html');
+}
+function loadComingSoon(title) {
+  document.getElementById("content-title").textContent = title;
+  document.getElementById("content-area").innerHTML = `
+    <div class="card-body p-5 text-center">
+      <h3 class="text-muted">Próximamente...</h3>
+      <p>La sección <strong>${title}</strong> estará disponible pronto.</p>
+    </div>`;
 }
 
-// ===================================
-// --- NUEVAS FUNCIONES (SPRINT 3) ---
-// ===================================
-
-/**
- * Carga la pagina de Intercambios (HU-08, HU-09)
- */
-async function loadExchangePage(title) {
-  const contentTitle = document.getElementById("content-title");
-  const contentArea = document.getElementById("content-area");
-  const userRol = localStorage.getItem("userRol");
-
-  contentTitle.textContent = title;
-
-  // 1. Inyectamos el HTML de la pagina de Intercambios
-  contentArea.innerHTML = `
+// --- ACTIVIDADES ---
+async function loadActivitiesDashboard(title) {
+  document.getElementById("content-title").textContent = title;
+  document.getElementById("content-area").innerHTML = `
     <div class="card-body p-4">
-      
-      <!-- SECCION 1: FORMULARIO PARA PUBLICAR (HU-08) -->
-      <!-- Oculto por defecto, solo visible para PRESTADOR -->
-      <div id="form-publicar-container" class="card mb-4 d-none">
-        <div class="card-header bg-primary text-white">
-          Publicar un Nuevo Item para Intercambio
-        </div>
-        <div class="card-body">
-          <form id="form-publicar-exchange">
-            <div class="mb-3">
-              <label for="item-titulo" class="form-label">Titulo</label>
-              <input type="text" class="form-control" id="item-titulo" placeholder="Ej: Apuntes de Psicoanalisis" required>
-            </div>
-            
-            <div class="mb-3">
-              <label for="item-tipo" class="form-label">Tipo de Item</label>
-              <select class="form-select" id="item-tipo" required>
-                <option value="" selected disabled>Selecciona una opcion...</option>
-                <option value="BIEN">Bien Fisico (Ej: Libros, Apuntes)</option>
-                <option value="SERVICIO">Servicio (Ej: Clases, Tutorias)</option>
-              </select>
-            </div>
-
-            <div class="mb-3">
-              <label for="item-deseado" class="form-label">Que buscas a cambio?</label>
-              <input type="text" class="form-control" id="item-deseado" placeholder="Ej: Apuntes de Matematica" required>
-            </div>
-            
-            <div class="mb-3">
-              <label for="item-descripcion" class="form-label">Descripcion (Opcional)</label>
-              <textarea class="form-control" id="item-descripcion" rows="3"></textarea>
-            </div>
-
-            <button type="submit" class="btn btn-primary">Publicar Item</button>
-          </form>
-        </div>
+      <div class="table-responsive">
+        <table class="table table-striped table-hover align-middle text-center">
+          <thead class="table-primary"><tr><th>ID</th><th>Título</th><th>Tipo</th><th>Fecha</th><th>Estado</th><th>Acciones</th></tr></thead>
+          <tbody id="activityTableBody"><tr><td colspan="6">Cargando...</td></tr></tbody>
+        </table>
       </div>
-
-      <!-- SECCION 2: LISTA DE ITEMS DISPONIBLES (HU-09) -->
-      <h2 class="h4">Items Disponibles</h2>
-      <div id="lista-intercambios-container" class="row g-3">
-        <p id="loading-placeholder">Cargando items disponibles...</p>
-      </div>
-
-    </div>
-  `;
-
-  // 2. Logica de visibilidad para el formulario
-  if (userRol === 'PRESTADOR') {
-    document.getElementById('form-publicar-container').classList.remove('d-none');
-
-    // 3. Adjuntar listener al formulario (solo si es prestador)
-    document.getElementById('form-publicar-exchange').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const headers = getAuthHeaders();
-      if (!headers) return;
-
-      const body = {
-        titulo: document.getElementById('item-titulo').value,
-        itemType: document.getElementById('item-tipo').value,
-        itemDeseado: document.getElementById('item-deseado').value,
-        descripcion: document.getElementById('item-descripcion').value
-      };
-
-      try {
-        const response = await fetch(`${API_URL}/exchanges/created`, {
-          method: "POST",
-          headers: headers,
-          body: JSON.stringify(body)
-        });
-
-        if (response.ok) {
-          Swal.fire('Publicado!', 'Tu item ya esta visible para intercambio.', 'success');
-          document.getElementById('form-publicar-exchange').reset(); // Limpiar formulario
-          fetchExchanges(); // Recargar la lista
-        } else {
-          const error = await response.json();
-          Swal.fire('Error', `No se pudo publicar: ${error.message}`, 'error');
-        }
-      } catch (error) {
-        console.error("Error al publicar item:", error);
-        Swal.fire('Error', 'Error de conexion con el servidor.', 'error');
-      }
-    });
-  }
-
-  // 4. Cargar la lista de items
-  fetchExchanges();
+    </div>`;
+  await fetchActivities(document.getElementById("activityTableBody"));
 }
-
-/**
- * Busca los items de intercambio (HU-09 y HU-10)
- */
-async function fetchExchanges() {
-  const container = document.getElementById("lista-intercambios-container");
-  const title = document.getElementById("exchange-list-title");
-  if (!container) return;
-  container.innerHTML = `<p id="loading-placeholder">Cargando items...</p>`;
-  title.textContent = "Items Disponibles";
-
-  const headers = getAuthHeaders();
-  if (!headers) return;
-
-  const userRol = localStorage.getItem("userRol");
-
-  // HU-10: Coordinador/Admin ven todo.
-  // HU-09: Usuarios ven solo lo DISPONIBLE.
-  let url = `${API_URL}/exchanges`;
-  if (userRol === 'USUARIO' || userRol === 'PRESTADOR') {
-    url += '?estado=DISPONIBLE';
-  }
-
-  try {
-    const response = await fetch(url, { method: "GET", headers: headers });
-    if (!response.ok) throw new Error("Error al cargar intercambios");
-
-    const exchanges = await response.json();
-    renderExchanges(exchanges);
-  } catch (error) {
-    console.error("Error al cargar intercambios:", error);
-    container.innerHTML = `<p class="text-danger">Error al cargar los items.</p>`;
-  }
-}
-
-/**
- * Renderiza las cards de Intercambio (HU-09 y HU-10)
- */
-function renderExchanges(exchanges) {
-  const container = document.getElementById("lista-intercambios-container");
-  if (!container) return;
-
-  if (!exchanges || exchanges.length === 0) {
-    container.innerHTML = `<p class="text-muted">No hay items de intercambio disponibles.</p>`;
-    return;
-  }
-
-  container.innerHTML = ""; // Limpiar el "cargando..."
-  const userId = parseInt(localStorage.getItem("userId"), 10);
-
-  exchanges.forEach(item => {
-    const isOwner = item.prestadorId === userId;
-
-    // El boton de solicitar solo aparece si no eres el dueno
-    const buttonHtml = isOwner
-      ? `<button class="btn btn-sm btn-outline-secondary" disabled>Es tu publicacion</button>`
-      : `<button class="btn btn-sm btn-outline-primary" 
-                 onclick="solicitarExchange(${item.id})" 
-                 ${item.estado !== 'DISPONIBLE' ? 'disabled' : ''}>
-           ${item.estado === 'DISPONIBLE' ? 'Solicitar' : item.estado}
-         </button>`;
-
-    const badgeColor = item.itemType === 'BIEN' ? 'bg-success' : 'bg-info';
-    const estadoColor = item.estado === 'DISPONIBLE' ? 'text-success' : 'text-warning';
-
-    const cardHtml = `
-      <div class="col-md-6 col-lg-4">
-        <div class="card item-card h-100">
-          <div class="card-body d-flex flex-column">
-            <h5 class="card-title">${item.titulo}</h5>
-            <h6 class="card-subtitle mb-2 text-muted">Busca: ${item.itemDeseado}</h6>
-            <p class="card-text small">${item.descripcion || ''}</p>
-            <div class="mt-auto">
-              <span class="badge ${badgeColor} me-2">${item.itemType}</span>
-              <span class="fw-bold ${estadoColor}">${item.estado}</span>
-              <div class="mt-3">
-                ${buttonHtml}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    `;
-    container.innerHTML += cardHtml;
-  });
-}
-
-/**
- * Logica para el boton "Solicitar" (HU-09)
- */
-window.solicitarExchange = async function (id) {
-  const headers = getAuthHeaders();
-  if (!headers) return;
-
-  try {
-    const response = await fetch(`${API_URL}/exchanges/${id}/solicitar`, {
-      method: "PATCH",
-      headers: headers
-    });
-
-    if (response.ok) {
-      Swal.fire('Solicitado!', 'El item ha sido reservado para ti. El prestador sera notificado.', 'success');
-      fetchExchanges(); // Recargar la lista
-    } else {
-      const error = await response.json();
-      Swal.fire('Error', `No se pudo solicitar: ${error.message}`, 'error');
-    }
-  } catch (error) {
-    console.error("Error al solicitar item:", error);
-    Swal.fire('Error', 'Error de conexion con el servidor.', 'error');
-  }
-}
-
-/**
- * Carga las donaciones (HU-13)
- */
-async function fetchDonations(title) {
-  const contentTitle = document.getElementById("content-title");
-  const contentArea = document.getElementById("content-area");
-  contentTitle.textContent = title;
-  contentArea.innerHTML = `<div class="card-body p-4 text-muted">Cargando datos de donaciones...</div>`;
-
-  const headers = getAuthHeaders();
-  if (!headers) return;
-
-  const userRol = localStorage.getItem("userRol");
-
-  // HU-13: El Gestor ve las pendientes. El resto ve... (por definir, por ahora vemos todo)
-  let url = `${API_URL}/donations/pending`;
-  if (userRol !== 'DONATION_MANAGER') {
-    // Por ahora, si no es gestor, no puede ver
-    contentArea.innerHTML = `<div class="card-body p-4"><div class="alert alert-warning">No tienes permisos para gestionar donaciones.</div></div>`;
-    return;
-  }
-
-  try {
-    const response = await fetch(url, {
-      method: "GET",
-      headers: headers
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || "Error del servidor");
-    }
-
-    const donations = await response.json();
-    renderDonations(donations);
-
-  } catch (error) {
-    console.error("Error al cargar donaciones:", error);
-    contentArea.innerHTML = `<div class="card-body p-4"><div class="alert alert-danger">Error de conexion: ${error.message}</div></div>`;
-  }
-}
-
-/**
- * Renderiza las cards de Donaciones (HU-13)
- */
-function renderDonations(donations) {
-  const contentArea = document.getElementById("content-area");
-
-  if (!donations || donations.length === 0) {
-    contentArea.innerHTML = `<div class="card-body p-4"><p class="text-muted">No hay donaciones pendientes de aprobacion.</p></div>`;
-    return;
-  }
-
-  let cardsHtml = donations.map(don => {
-    const badgeColor = don.itemType === 'BIEN' ? 'bg-success' : 'bg-info';
-    return `
-      <div class="col-md-6 col-lg-4">
-        <div class="card donation-card h-100">
-          <div class="card-body">
-            <h5 class="card-title">${don.descripcionItem}</h5>
-            <h6 class="card-subtitle mb-2 text-muted">Cantidad: ${don.cantidad || 1}</h6>
-            <p class="card-text">
-              <span class="badge ${badgeColor}">${don.itemType}</span>
-              <span class="badge bg-warning text-dark">${don.estado}</span>
-            </p>
-            <p class="card-text small text-muted">Donante ID: ${don.donanteId}</p>
-            <div class="mt-3">
-              <button class="btn btn-sm btn-success" onclick="approveDonation(${don.id})">Aprobar</button>
-              <button class="btn btn-sm btn-danger ms-2" onclick="rejectDonation(${don.id})">Rechazar</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    `;
-  }).join('');
-
-  contentArea.innerHTML = `
-    <div class="card-body p-4">
-      <h2 class="h4">Donaciones Pendientes de Aprobacion</h2>
-      <div class="row g-3">
-        ${cardsHtml}
-      </div>
-    </div>
-  `;
-}
-
-/**
- * Logica para aprobar donacion (HU-13)
- */
-window.approveDonation = async function (id) {
-  const headers = getAuthHeaders();
-  if (!headers) return;
-
-  try {
-    const response = await fetch(`${API_URL}/donations/${id}/approve`, {
-      method: "PATCH",
-      headers: headers
-    });
-    if (response.ok) {
-      Swal.fire('Aprobada!', 'La donacion ha sido aceptada.', 'success');
-      fetchDonations("Ver Donaciones"); // Recargar
-    } else {
-      const error = await response.json();
-      Swal.fire('Error', `No se pudo aprobar: ${error.message}`, 'error');
-    }
-  } catch (error) {
-    console.error("Error al aprobar donacion:", error);
-    Swal.fire('Error', 'Error de conexion.', 'error');
-  }
-}
-
-/**
- * Logica para rechazar donacion (HU-13)
- */
-window.rejectDonation = async function (id) {
-  const headers = getAuthHeaders();
-  if (!headers) return;
-
-  try {
-    const response = await fetch(`${API_URL}/donations/${id}/reject`, {
-      method: "PATCH",
-      headers: headers
-    });
-    if (response.ok) {
-      Swal.fire('Rechazada', 'La donacion ha sido rechazada.', 'info');
-      fetchDonations("Ver Donaciones"); // Recargar
-    } else {
-      const error = await response.json();
-      Swal.fire('Error', `No se pudo rechazar: ${error.message}`, 'error');
-    }
-  } catch (error) {
-    console.error("Error al rechazar donacion:", error);
-    Swal.fire('Error', 'Error de conexion.', 'error');
-  }
-}
-
-
-// ===================================================
-// FUNCIONES ANTIGUAS (Sin cambios)
-// ===================================================
 
 async function fetchActivities(tableBody) {
   const headers = getAuthHeaders();
   if (!headers) return;
-
   try {
-    console.log("🌐 Obteniendo actividades...");
-    const response = await fetch(`${API_URL}/activities`, {
-      method: "GET",
-      headers: headers
-    });
-
-    console.log("📊 Respuesta de actividades, status:", response.status);
-
-    if (response.status === 401 || response.status === 403) {
-      console.warn("🔒 No autorizado, ejecutando logout");
-      handleLogout();
-      return;
-    }
-    if (!response.ok) throw new Error("Error al obtener actividades");
-
-    const activities = await response.json();
-
-    if (!Array.isArray(activities)) {
-      console.error("❌ La respuesta no es un array:", activities);
-      tableBody.innerHTML = `<tr><td colspan="6" class="text-danger p-4">Formato de respuesta invalido del servidor.</td></tr>`;
-      return;
-    }
-
-    console.log(`✅ ${activities.length} actividades obtenidas`);
-    renderActivities(activities, tableBody);
-  } catch (error) {
-    console.error("❌ Error al cargar actividades:", error);
-    tableBody.innerHTML = `<tr><td colspan="6" class="text-danger p-4">Error al conectar con el servidor de actividades.</td></tr>`;
-  }
+    const res = await fetch(`${API_URL}/activities`, { headers });
+    if (res.ok) {
+        const activities = await res.json();
+        renderActivities(activities, tableBody);
+    } else { throw new Error(); }
+  } catch (e) { tableBody.innerHTML = `<tr><td colspan="6" class="text-danger">Error carga.</td></tr>`; }
 }
 
-function renderActivities(activities, tableBody) {
-  const userRol = localStorage.getItem("userRol");
-
-  let filteredActivities = activities;
-
-  // Estas reglas de filtrado son de la logica anterior,
-  // se pueden refinar.
-  if (userRol === 'USUARIO') {
-    filteredActivities = activities.filter(activity =>
-      activity.estado === 'ABIERTO' || activity.estado === 'EN_CURSO'
-    );
-  }
-  if (userRol === 'COORDINADOR') {
-    filteredActivities = activities.filter(activity =>
-      activity.estado !== 'PENDIENTE'
-    );
-  }
-
-  if (!filteredActivities || filteredActivities.length === 0) {
-    tableBody.innerHTML = `<tr><td colspan="6" class="text-muted p-4">No hay actividades disponibles para ti.</td></tr>`;
-    return;
-  }
-
+function renderActivities(list, tableBody) {
+  const role = localStorage.getItem("userRol");
   tableBody.innerHTML = "";
+  
+  let filtered = list;
+  if (role === 'USUARIO') filtered = list.filter(a => ['ABIERTO', 'EN_CURSO'].includes(a.estado));
+  if (role === 'COORDINADOR') filtered = list.filter(a => a.estado !== 'PENDIENTE');
 
-  filteredActivities.forEach(activity => {
+  if (!filtered.length) { tableBody.innerHTML = `<tr><td colspan="6" class="text-muted">No hay actividades.</td></tr>`; return; }
+
+  filtered.forEach(act => {
     const tr = document.createElement("tr");
-
-    let buttons = '';
-    const isActivityOpen = activity.estado === 'ABIERTO';
-
-    if (userRol !== 'ADMINISTRADOR') {
-      const disabledAttr = isActivityOpen ? '' : `disabled title="Solo puedes unirte a actividades 'ABIERTAS'"`;
-      buttons += `
-        <button class="btn btn-sm btn-outline-primary" 
-                onclick="joinActivity(${activity.activityId})" ${disabledAttr}>
-          Participar
-        </button>
-      `;
+    const date = act.fechaInicio ? new Date(act.fechaInicio).toLocaleDateString() : "-";
+    let btns = '';
+    if (role !== 'ADMINISTRADOR') {
+        btns += `<button class="btn btn-sm btn-outline-primary" onclick="joinActivity(${act.activityId})">Participar</button>`;
+    } else if (act.estado === 'PENDIENTE') {
+        btns += `<button class="btn btn-sm btn-success me-1" onclick="validateActivity(${act.activityId}, 'ABIERTO')">✓</button>`;
+        btns += `<button class="btn btn-sm btn-danger" onclick="validateActivity(${act.activityId}, 'SUSPENDIDO')">✗</button>`;
     }
-
-    if (userRol === 'ADMINISTRADOR' && activity.estado === 'PENDIENTE') {
-      buttons += `
-        <button class="btn btn-sm btn-success ms-2" 
-                onclick="validateActivity(${activity.activityId}, 'ABIERTO')">
-          Aprobar
-        </button>
-        <button class="btn btn-sm btn-danger ms-2" 
-                onclick="validateActivity(${activity.activityId}, 'SUSPENDIDO')">
-          Rechazar
-        </button>
-      `;
-    }
-
-    if (userRol === 'ADMINISTRADOR' || userRol === 'COORDINADOR') {
-      buttons += `
-        <button class="btn btn-sm btn-outline-info ms-2" 
-                onclick="viewParticipants(${activity.activityId})">
-          Ver Lista
-        </button>
-      `;
-    }
-
-    let estadoBadge = '';
-    switch (activity.estado) {
-      case 'PENDIENTE': estadoBadge = '<span class="badge bg-warning text-dark">PENDIENTE</span>'; break;
-      case 'ABIERTO': estadoBadge = '<span class="badge bg-success">ABIERTO</span>'; break;
-      case 'EN_CURSO': estadoBadge = '<span class="badge bg-info">EN CURSO</span>'; break;
-      case 'FINALIZADO': estadoBadge = '<span class="badge bg-secondary">FINALIZADO</span>'; break;
-      case 'SUSPENDIDO': estadoBadge = '<span class="badge bg-danger">SUSPENDIDO</span>'; break;
-      default: estadoBadge = `<span class="badge bg-dark">${activity.estado}</span>`;
-    }
-
-    const fecha = activity.fechaInicio ? new Date(activity.fechaInicio).toLocaleDateString() : "-";
-
-    tr.innerHTML = `
-      <td>${activity.activityId}</td>
-      <td>${activity.titulo}</td>
-      <td>${activity.tipoActividad}</td>
-      <td>${fecha}</td>
-      <td>${estadoBadge}</td>
-      <td>${buttons}</td>
-    `;
+    tr.innerHTML = `<td>${act.activityId}</td><td>${act.titulo}</td><td>${act.tipoActividad}</td><td>${date}</td>
+                    <td><span class="badge bg-secondary">${act.estado}</span></td><td>${btns}</td>`;
     tableBody.appendChild(tr);
   });
 }
 
-// ===================================================
-// FUNCIONES GLOBALES (llamadas por onclick)
-// ===================================================
+// --- DONACIONES GESTIÓN ---
+async function fetchDonations(title) {
+  document.getElementById("content-title").textContent = title;
+  const area = document.getElementById("content-area");
+  area.innerHTML = `<div class="p-4">Cargando...</div>`;
+  const headers = getAuthHeaders();
+  if(!headers) return;
+  try {
+      const res = await fetch(`${API_URL}/donations/pending`, { headers });
+      if(res.ok) {
+          const data = await res.json();
+          renderDonationsList(data, area);
+      } else { area.innerHTML = `<div class="alert alert-warning">Error acceso.</div>`; }
+  } catch(e) { area.innerHTML = `<div class="alert alert-danger">Error conexión.</div>`; }
+}
 
-window.joinActivity = async function (activityId) {
+function renderDonationsList(list, container) {
+    if(!list.length) { container.innerHTML = `<div class="p-4 text-muted">Sin pendientes.</div>`; return; }
+    const html = list.map(d => `
+      <div class="col-md-6 col-lg-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body">
+                <h5>${d.descripcionItem || 'Donación'}</h5>
+                <p class="text-muted mb-1">Tipo: ${d.itemType} | Cant: ${d.cantidad}</p>
+                <span class="badge bg-warning text-dark">${d.estado}</span>
+                <div class="mt-3">
+                    <button class="btn btn-sm btn-success" onclick="approveDonation(${d.id})">Aprobar</button>
+                    <button class="btn btn-sm btn-danger" onclick="rejectDonation(${d.id})">Rechazar</button>
+                </div>
+            </div>
+        </div>
+      </div>`).join('');
+    container.innerHTML = `<div class="card-body p-4"><div class="row g-3">${html}</div></div>`;
+}
+
+// =========================
+// NUEVAS FUNCIONES (SPRINT 4: TU APORTE & SPRINT 3: INTERCAMBIOS)
+// =========================
+
+// --- TU APORTE (VISTA DE TARJETAS) ---
+async function loadDonationCardsPage(title) {
+  const contentTitle = document.getElementById("content-title");
+  const contentArea = document.getElementById("content-area");
+  contentTitle.textContent = title; // "Tu Aporte"
+
+  contentArea.innerHTML = `
+    <div class="card-body p-4">
+      <p class="text-muted mb-4">Elige una causa y selecciona un monto fijo para colaborar. ¡Gracias!</p>
+      <div id="donation-cards-container" class="row g-4">
+        <div class="text-center w-100 py-4">Cargando causas...</div>
+      </div>
+    </div>`;
+
+  const container = document.getElementById("donation-cards-container");
+  let cardsHtml = "";
+
+  // 1. Tarjeta Institucional
+  cardsHtml += createDonationCardHtml({ id: null, titulo: "Fondo Común HugNet", desc: "Apoya a la organización general para gastos operativos.", icon: 'bi-globe-americas', badge: 'Institucional' });
+
+  // 2. Tarjetas de Actividades
+  try {
+    const headers = getAuthHeaders();
+    if (headers) {
+      const res = await fetch(`${API_URL}/activities`, { headers });
+      if (res.ok) {
+        const list = await res.json();
+        list.filter(a => ['ABIERTO', 'EN_CURSO'].includes(a.estado)).forEach(a => {
+            cardsHtml += createDonationCardHtml({ 
+                id: a.activityId, 
+                titulo: a.titulo, 
+                desc: `Campaña activa (${a.tipoActividad}).`, 
+                icon: 'bi-stars', 
+                badge: 'Campaña' 
+            });
+        });
+      }
+    }
+  } catch (e) { console.warn("Error cargando campañas", e); }
+  container.innerHTML = cardsHtml;
+}
+
+function createDonationCardHtml({ id, titulo, desc, icon, badge }) {
+  // El ID 'null' debe pasarse como string 'null' o handled carefully
+  const idParam = id === null ? 'null' : id;
+  const badgeClass = id === null ? 'bg-primary' : 'bg-success';
+
+  return `
+    <div class="col-md-6 col-lg-4">
+      <div class="card h-100 shadow-sm border-0 item-card">
+        <div class="card-body text-center p-4 d-flex flex-column align-items-center">
+          <div class="rounded-circle bg-light p-3 mb-3 text-primary"><i class="bi ${icon} fs-1"></i></div>
+          <span class="badge ${badgeClass} mb-2">${badge}</span>
+          <h5 class="card-title fw-bold">${titulo}</h5>
+          <p class="card-text text-muted small">${desc}</p>
+          <div class="mt-auto w-100 pt-3">
+            <button class="btn btn-outline-primary w-100 rounded-pill" onclick="initiateDonationFlow(${idParam}, '${titulo}')">
+              <i class="bi bi-heart-fill me-2"></i> Aportar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>`;
+}
+
+// --- FLUJO DE DONACIÓN (MODAL CON MONTOS FIJOS) ---
+
+
+window.initiateDonationFlow = async function(activityId, activityTitle) {
+  // Paso 1: Selector de monto
+  const { value: montoStr } = await Swal.fire({
+    title: `Aporte para: ${activityTitle}`,
+    text: 'Selecciona el monto de tu colaboración',
+    input: 'radio',
+    inputOptions: {
+      '500': '$ 500 (Colaborador)',
+      '1000': '$ 1.000 (Amigo)',
+      '2000': '$ 2.000 (Protector)'
+    },
+    inputValidator: (value) => { if (!value) return 'Debes seleccionar una opción'; },
+    showCancelButton: true,
+    confirmButtonText: 'Generar QR de Pago',
+    cancelButtonText: 'Cancelar'
+  });
+
+  if (!montoStr) return;
+
+  const headers = getAuthHeaders();
+  if (!headers) return;
+
+  Swal.fire({ title: 'Generando link...', didOpen: () => Swal.showLoading() });
+
+  try {
+    
+    
+    const payload = {
+        // Nombre exacto del campo en Java: private DonationType tipoDonacion;
+        tipoDonacion: 'MONETARIA', // Valor exacto del Enum DonationType
+        
+        // Nombre exacto: private Double monto;
+        monto: parseFloat(montoStr),
+        
+        // Comentario opcional 
+        // Tu DTO tiene 'descripcionItem', usaremos ese para guardar el comentario.
+        descripcionItem: `Aporte Web (${activityTitle})`, 
+        
+        // itemType: No lo enviamos porque es monetaria (o null)
+        itemType: null,
+        
+        cantidad: 1 // Default para que @Min(1) no falle si se valida
+    };
+
+    // Agregamos activityId solo si es válido
+    if (activityId && activityId !== 'null' && activityId !== null) {
+        payload.activityId = parseInt(activityId);
+    }
+
+    console.log("📦 Payload enviado:", JSON.stringify(payload)); 
+
+    const res = await fetch(`${API_URL}/donations`, { 
+        method: "POST", 
+        headers, 
+        body: JSON.stringify(payload) 
+    });
+    
+    if (res.ok) {
+      const data = await res.json();
+      
+      // MODIFICACIÓN PARA EL VIDEO:
+      // Agregamos un botón extra para simular el retorno si MP falla
+      Swal.fire({
+        title: '¡Listo para aportar!',
+        html: `
+          <p>1. Escanea el QR o toca "Ir a Pagar".</p>
+          <p>2. Cuando termines, vuelve aquí y confirma.</p>
+          <div id="payment-qr" class="d-flex justify-content-center my-3"></div>
+          <a href="${data.paymentUrl}" class="btn btn-primary rounded-pill mb-3" target="_blank">
+             <i class="bi bi-credit-card-2-front"></i> Ir a Pagar en MercadoPago
+          </a>
+        `,
+        // Botón secundario para confirmar manualmente
+        showDenyButton: true,
+        confirmButtonText: 'Cerrar',
+        denyButtonText: '✅ ¡Ya pagué! (Confirmar)',
+        denyButtonColor: '#198754', // Verde
+        
+        didOpen: () => {
+          new QRCode(document.getElementById("payment-qr"), { text: data.paymentUrl, width: 150, height: 150 });
+        }
+      }).then((result) => {
+          // Si el usuario hace clic en "Ya pagué"
+          if (result.isDenied) {
+              Swal.fire({
+                  title: '¡Muchas Gracias!',
+                  text: 'Estamos verificando tu aporte. ¡Gracias por colaborar!',
+                  icon: 'success'
+              }).then(() => {
+                  // Recargamos para limpiar
+                  window.location.href = "dashboard.html?view=Tu%20Aporte";
+              });
+          }
+      });
+
+    } else {
+      const err = await res.json();
+      console.error("Error Backend:", err);
+      // Mostramos el mensaje exacto del error de validación si existe
+      let msg = err.message || 'Error al procesar la donación';
+      if(err.errors) msg += "\n" + err.errors.map(e => e.defaultMessage).join("\n");
+      
+      Swal.fire('Error', msg, 'error');
+    }
+  } catch (e) { 
+    console.error(e);
+    Swal.fire('Error', 'Error de conexión.', 'error'); 
+  }
+};
+
+// --- INTERCAMBIOS (SPRINT 3) ---
+async function loadExchangePage(title) {
+  const area = document.getElementById("content-area");
+  document.getElementById("content-title").textContent = title;
+  const role = localStorage.getItem("userRol");
+
+  area.innerHTML = `
+    <div class="card-body p-4">
+      <div id="form-publicar-container" class="card mb-4 d-none">
+        <div class="card-header bg-primary text-white">Publicar Ítem</div>
+        <div class="card-body">
+          <form id="form-publicar-exchange">
+            <div class="row">
+                <div class="col-md-6 mb-3"><label class="form-label">Título</label><input type="text" class="form-control" id="item-titulo" required></div>
+                <div class="col-md-6 mb-3"><label class="form-label">Tipo</label><select class="form-select" id="item-tipo" required><option value="BIEN">Bien Físico</option><option value="SERVICIO">Servicio</option></select></div>
+            </div>
+            <div class="mb-3"><label class="form-label">¿Qué buscas?</label><input type="text" class="form-control" id="item-deseado" required></div>
+            <button type="submit" class="btn btn-primary">Publicar</button>
+          </form>
+        </div>
+      </div>
+      <h4 class="mb-3">Ítems Disponibles</h4>
+      <div id="lista-intercambios-container" class="row g-3"><p>Cargando...</p></div>
+    </div>`;
+
+  if (role === 'PRESTADOR') {
+    document.getElementById('form-publicar-container').classList.remove('d-none');
+    document.getElementById('form-publicar-exchange').addEventListener('submit', handlePublishExchange);
+  }
+  fetchExchanges();
+}
+
+async function handlePublishExchange(e) {
+    e.preventDefault();
+    const headers = getAuthHeaders();
+    const body = {
+        titulo: document.getElementById('item-titulo').value,
+        itemType: document.getElementById('item-tipo').value,
+        itemDeseado: document.getElementById('item-deseado').value,
+        descripcion: "Web"
+    };
+    try {
+        const res = await fetch(`${API_URL}/exchanges/created`, { method: "POST", headers, body: JSON.stringify(body) });
+        if(res.ok) { Swal.fire('Éxito', 'Publicado', 'success'); e.target.reset(); fetchExchanges(); }
+        else { Swal.fire('Error', 'No se pudo publicar', 'error'); }
+    } catch(err) { console.error(err); }
+}
+
+async function fetchExchanges() {
+  const container = document.getElementById("lista-intercambios-container");
+  const headers = getAuthHeaders();
+  const role = localStorage.getItem("userRol"); // Obtenemos el rol aquí
+
+  if (!headers) return;
+
+  // 1. URL LIMPIA: Quitamos el filtro de la URL para que el Backend no falle
+  const url = `${API_URL}/exchanges`; 
+
+  try {
+      const res = await fetch(url, { headers });
+      
+      if(res.ok) {
+          const allData = await res.json();
+          
+          // 2. FILTRADO EN FRONTEND:
+          // Si NO es Admin ni Coordinador, filtramos manualmente aquí
+          let dataToRender = allData;
+          if (role !== 'ADMINISTRADOR' && role !== 'COORDINADOR') {
+              dataToRender = allData.filter(item => item.estado === 'DISPONIBLE');
+          }
+
+          renderExchanges(dataToRender, container);
+      } else {
+          container.innerHTML = `<p class="text-danger">Error del servidor (${res.status}).</p>`;
+      }
+  } catch(e) {
+      console.error(e);
+      container.innerHTML = `<p class="text-danger">Error de conexión.</p>`;
+  }
+}
+
+function renderExchanges(list, container) {
+  if (!list.length) { container.innerHTML = `<p class="text-muted">No hay ítems.</p>`; return; }
+  container.innerHTML = "";
+  const userId = parseInt(localStorage.getItem("userId"));
+
+  list.forEach(item => {
+    const isOwner = item.prestadorId === userId;
+    // ... botones ...
+    let mainBtn = isOwner 
+        ? `<button class="btn btn-sm btn-outline-secondary" disabled>Tu publicación</button>`
+        : `<button class="btn btn-sm btn-outline-primary" onclick="solicitarExchange(${item.id})" ${item.estado !== 'DISPONIBLE' ? 'disabled' : ''}>Solicitar</button>`;
+
+    let qrBtn = '';
+    if (item.estado !== 'DISPONIBLE' && item.tokenConfirmacion) {
+        // ¡AQUÍ EL CAMBIO! Pasamos item.tokenConfirmacion
+        qrBtn = `<button class="btn btn-sm btn-dark w-100 mt-2" onclick="showExchangeQR('${item.tokenConfirmacion}', '${item.titulo}', ${item.id})"><i class="bi bi-qr-code"></i> Ver QR</button>`;
+    }
+
+    // ... resto del HTML de la tarjeta ...
+    container.innerHTML += `
+      <div class="col-md-6 col-lg-4">
+        <div class="card h-100 shadow-sm border-0">
+          <div class="card-body d-flex flex-column">
+            <h5 class="card-title text-truncate">${item.titulo}</h5>
+            <h6 class="card-subtitle mb-2 text-muted">Busca: ${item.itemDeseado}</h6>
+            <div class="mt-auto">
+              <span class="badge bg-info text-dark mb-2">${item.estado}</span>
+              <div class="d-grid">${mainBtn}${qrBtn}</div>
+            </div>
+          </div>
+        </div>
+      </div>`;
+  });
+}
+
+window.showExchangeQR = function(token, title, id) {
+    Swal.fire({
+        title: 'Validar Intercambio',
+        // HTML: Solo el texto y el contenedor del QR
+        html: `
+            <p class="text-muted mb-3">Muestra este código para entregar: <strong>${title}</strong></p>
+            <div class="d-flex justify-content-center mb-4">
+                <div id="qrcode" class="p-2 border rounded bg-white"></div>
+            </div>
+            <div class="alert alert-light border small">
+               <i class="bi bi-info-circle"></i> Simulación para Demo
+            </div>
+        `,
+        // CONFIGURACIÓN DE BOTONES (Esto garantiza que se vean)
+        showConfirmButton: true,
+        confirmButtonText: 'Confirmar Entrega',
+        confirmButtonColor: '#198754', // Color Verde (#success)
+        showCloseButton: true,
+        
+        // Generación del QR al abrir
+        didOpen: () => {
+            new QRCode(document.getElementById("qrcode"), {
+                text: token, 
+                width: 160,
+                height: 160
+            });
+        }
+    }).then((result) => {
+        // Lógica: Si el usuario toca el botón verde "Confirmar Entrega"
+        if (result.isConfirmed) {
+            confirmarIntercambioDemo(token, id);
+        }
+    });
+};
+
+// Modificamos la confirmación para usar el endpoint correcto (si existiera) o simular
+window.confirmarIntercambioDemo = async function(token, id) {
+    const headers = getAuthHeaders();
+    Swal.showLoading();
+    
+    try {
+        // CORRECCIÓN: Usamos GET y la URL exacta de tu Controller (/confirmar/{token})
+        const res = await fetch(`${API_URL}/exchanges/confirmar/${token}`, { 
+            method: "PATCH", // Tu backend usa @GetMapping
+            headers 
+        });
+        
+        if (res.ok) {
+            // Si el backend devuelve el objeto actualizado, todo salió bien
+            Swal.fire({
+                title: '¡Entrega Confirmada!',
+                text: 'El sistema ha validado el token correctamente.',
+                icon: 'success'
+            }).then(() => {
+                 fetchExchanges(); // Refrescamos la lista
+            });
+        } else {
+            // Capturamos el error del backend
+            const err = await res.json();
+            Swal.fire('Error', err.message || 'Token inválido o expirado.', 'error');
+        }
+
+    } catch (e) {
+        console.error(e);
+        Swal.fire('Error', 'Error de conexión con el servidor.', 'error');
+    }
+};
+
+window.solicitarExchange = async function(id) {
+    const headers = getAuthHeaders();
+    try {
+        const res = await fetch(`${API_URL}/exchanges/${id}/solicitar`, { method: "PATCH", headers });
+        if(res.ok) { Swal.fire('Éxito', 'Solicitado', 'success'); fetchExchanges(); }
+        else { Swal.fire('Error', 'Error solicitud', 'error'); }
+    } catch(e) { Swal.fire('Error', 'Error conexión', 'error'); }
+};
+
+
+
+// --- GLOBALES ---
+window.joinActivity = async function (id) {
   const headers = getAuthHeaders();
   const userId = localStorage.getItem("userId");
-
-  if (!headers || !userId) {
-    Swal.fire('Error', 'Debe iniciar sesion para participar.', 'error');
-    return;
-  }
-
   try {
-    const response = await fetch(`${API_URL}/activities/${activityId}/join/${userId}`, {
-      method: "POST",
-      headers: headers
-    });
+      const res = await fetch(`${API_URL}/activities/${id}/join/${userId}`, { method: "POST", headers });
+      if(res.ok) Swal.fire('Éxito', 'Te has unido.', 'success');
+      else { const err = await res.json(); Swal.fire('Error', err.message, 'error'); }
+  } catch(e) { console.error(e); }
+};
 
-    if (response.ok) {
-      Swal.fire('¡Exito!', 'Te has unido a la actividad.', 'success');
-      loadActivitiesDashboard("Mis Actividades");
-    } else {
-      const error = await response.json();
-      Swal.fire('Error', `No se pudo unir: ${error.message}`, 'error');
-    }
-  } catch (error) {
-    console.error("Error al unirse a actividad:", error);
-    Swal.fire('Error', 'Error de conexion con el servidor.', 'error');
-  }
-}
+window.validateActivity = async function (id, status) {
+    const headers = getAuthHeaders();
+    try {
+      const res = await fetch(`${API_URL}/admin/activities/${id}/status`, { method: "PATCH", headers, body: JSON.stringify({ newStatus: status }) });
+      if (res.ok) { Swal.fire('Éxito', 'Actualizado.', 'success'); loadActivitiesDashboard("Gestión de Actividades"); }
+      else Swal.fire('Error', 'No se pudo actualizar.', 'error');
+    } catch(e) { Swal.fire('Error', 'Error conexión.', 'error'); }
+};
 
-window.validateActivity = async function (activityId, newStatus) {
-  const headers = getAuthHeaders();
-  if (!headers) return;
-
-  const actionText = newStatus === 'ABIERTO' ? 'Aprobar' : 'Rechazar';
-  const newStatusText = newStatus === 'ABIERTO' ? 'ABIERTA' : 'SUSPENDIDO';
-
-  try {
-    const response = await fetch(`${API_URL}/admin/activities/${activityId}/status`, {
-      method: "PATCH",
-      headers: headers,
-      body: JSON.stringify({ newStatus: newStatus })
-    });
-
-    if (response.ok) {
-      Swal.fire(`¡Exito!`, `La actividad ha sido marcada como ${newStatusText}.`, 'success');
-      loadActivitiesDashboard("Gestion de Actividades");
-    } else {
-      const error = await response.json();
-      Swal.fire('Error', `Error al ${actionText}: ${error.message}`, 'error');
-    }
-  } catch (error) {
-    console.error("Error al validar:", error);
-    Swal.fire('Error', 'Error de conexion con el servidor.', 'error');
-  }
-}
-
-window.viewParticipants = async function (activityId) {
-  const headers = getAuthHeaders();
-  if (!headers) return;
-
-  try {
-    const response = await fetch(`${API_URL}/activities/${activityId}/participants`, {
-      method: "GET",
-      headers: headers
-    });
-
-    if (response.ok) {
-      const participantIds = await response.json();
-
-      if (participantIds.length === 0) {
-        Swal.fire('Info', 'Aun no hay participantes inscritos en esta actividad.', 'info');
-      } else {
-        // En el futuro, llamariamos a /api/users/batch para obtener nombres
-        Swal.fire('Participantes (IDs)', `Proximamente veras los nombres.\nIDs: ${participantIds.join(', ')}`, 'info');
-      }
-
-    } else {
-      const error = await response.json();
-      Swal.fire('Error', `Error al ver participantes: ${error.message}`, 'error');
-    }
-  } catch (error) {
-    console.error("Error al ver participantes:", error);
-    Swal.fire('Error', 'Error de conexion con el servidor.', 'error');
-  }
-}
+window.approveDonation = async function(id) {
+    const headers = getAuthHeaders();
+    await fetch(`${API_URL}/donations/${id}/approve`, { method: "PATCH", headers });
+    fetchDonations("Administrar Donaciones");
+};
+window.rejectDonation = async function(id) {
+    const headers = getAuthHeaders();
+    await fetch(`${API_URL}/donations/${id}/reject`, { method: "PATCH", headers });
+    fetchDonations("Administrar Donaciones");
+};

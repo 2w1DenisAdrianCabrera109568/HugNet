@@ -22,8 +22,6 @@ import com.mercadopago.exceptions.MPException;
 import com.mercadopago.resources.payment.Payment;
 import com.mercadopago.resources.preference.Preference;
 
-
-
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -46,6 +44,7 @@ public class DonationServiceImpl implements DonationService {
     // Inyectamos el token desde application.yml
     @Value("${mercadopago.access.token}")
     private String mercadoPagoAccessToken;
+
     // Inicializamos la configuración de MercadoPago al arrancar el servicio
     @PostConstruct
     public void initMercadoPago() {
@@ -60,11 +59,12 @@ public class DonationServiceImpl implements DonationService {
                 .collect(Collectors.toList());
     }
 
-    // --- HU-12: Un usuario ofrece una nueva donación en especie (BIEN o SERVICIO) --- Actualizado a Sprint 4
+    // --- HU-12: Un usuario ofrece una nueva donación en especie (BIEN o SERVICIO)
+    // --- Actualizado a Sprint 4
 
- @Override
+    @Override
     public DonationDTO createDonation(CreateDonationDTO dto, Long donanteId) {
-        
+
         // 1. Validación y Creación según el tipo
         Donation newDonation = donationMapper.toEntity(dto);
         newDonation.setDonanteId(donanteId);
@@ -85,14 +85,14 @@ public class DonationServiceImpl implements DonationService {
             try {
                 // Creamos la preferencia y obtenemos la URL
                 Preference preference = createMercadoPagoPreference(savedDonation);
-                
+
                 // Guardamos el ID de la preferencia en nuestra BD para referencia futura
                 savedDonation.setPaymentGatewayId(preference.getId());
                 savedDonation = donationRepository.save(savedDonation);
-                
+
                 // Obtenemos la URL para el frontend (Sandbox o Producción según config)
                 preferenceUrl = preference.getSandboxInitPoint(); // Usamos Sandbox para pruebas
-                
+
             } catch (Exception e) {
                 // Si falla MP, marcamos como error o lanzamos excepción.
                 // Por ahora lanzamos Runtime para simplificar, pero en prod se maneja mejor.
@@ -121,7 +121,8 @@ public class DonationServiceImpl implements DonationService {
 
     private void handleMonetaryValidation(CreateDonationDTO dto, Donation entity) {
         if (dto.getMonto() == null || dto.getMonto() <= 0) {
-            throw new IllegalArgumentException("El monto es obligatorio y debe ser positivo para donaciones monetarias.");
+            throw new IllegalArgumentException(
+                    "El monto es obligatorio y debe ser positivo para donaciones monetarias.");
         }
         // Inicializamos estado de pago
         entity.setPaymentStatus(PaymentStatus.PENDIENTE_PAGO);
@@ -129,9 +130,9 @@ public class DonationServiceImpl implements DonationService {
 
     // --- Integración con MercadoPago (HU-14) ---
 
-private Preference createMercadoPagoPreference(Donation donation) {
+    private Preference createMercadoPagoPreference(Donation donation) {
         log.info("--> Iniciando creación de preferencia MP para Donación ID: {}", donation.getId());
-
+        String urlFrontend = "http://127.0.0.1:5500/frontend";
         try {
             // 1. Crear el ítem
             PreferenceItemRequest itemRequest = PreferenceItemRequest.builder()
@@ -145,20 +146,20 @@ private Preference createMercadoPagoPreference(Donation donation) {
 
             // 2. URLs de retorno (DEFINIMOS EL OBJETO)
             PreferenceBackUrlsRequest backUrls = PreferenceBackUrlsRequest.builder()
-                    .success("http://localhost:5500/dashboard.html?status=success")
-                    .pending("http://localhost:5500/dashboard.html?status=pending")
-                    .failure("http://localhost:5500/dashboard.html?status=failure")
+                    .success(urlFrontend + "/dashboard.html?view=Tu%20Aporte&status=success")
+                    .pending(urlFrontend + "/dashboard.html?view=Tu%20Aporte&status=pending")
+                    .failure(urlFrontend + "/dashboard.html?view=Tu%20Aporte&status=failure")
                     .build();
 
             // 3. Solicitud completa (USAMOS EL OBJETO)
             PreferenceRequest preferenceRequest = PreferenceRequest.builder()
                     .items(List.of(itemRequest))
-                    .backUrls(backUrls)       
-                    //.autoReturn("approved")   // Esto requiere que backUrls esté definido arriba
+                    .backUrls(backUrls)
+                    // .autoReturn("approved") // Esto requiere que backUrls esté definido arriba
                     .externalReference(donation.getId().toString())
                     .build();
 
-            log.info("Enviando solicitud a MercadoPago... BackUrls configuradas: {}", 
+            log.info("Enviando solicitud a MercadoPago... BackUrls configuradas: {}",
                     preferenceRequest.getBackUrls() != null ? "SÍ" : "NO (ERROR)");
 
             // 4. Cliente y Envío
@@ -178,22 +179,24 @@ private Preference createMercadoPagoPreference(Donation donation) {
         }
     }
 
-   @Override
+    @Override
     public void processPaymentNotification(String topic, Long id) {
         // Solo nos interesan las notificaciones de tipo "payment"
         if (!"payment".equals(topic) && !"merchant_order".equals(topic)) {
-             // Nota: En producción a veces MP manda 'merchant_order', 
-             // para este MVP nos enfocamos en 'payment' que es lo directo.
-            return; 
+            // Nota: En producción a veces MP manda 'merchant_order',
+            // para este MVP nos enfocamos en 'payment' que es lo directo.
+            return;
         }
-        
+
         try {
             if ("payment".equals(topic)) {
-                // 1. Consultar a MercadoPago los detalles del pago usando el ID que nos mandaron
+                // 1. Consultar a MercadoPago los detalles del pago usando el ID que nos
+                // mandaron
                 PaymentClient client = new PaymentClient();
                 Payment payment = client.get(id);
 
-                // 2. Obtener nuestra referencia (El ID de la donación que enviamos al crear la preferencia)
+                // 2. Obtener nuestra referencia (El ID de la donación que enviamos al crear la
+                // preferencia)
                 String externalReference = payment.getExternalReference();
                 if (externalReference == null) {
                     System.out.println("Pago sin referencia externa, ignorando...");
@@ -208,14 +211,15 @@ private Preference createMercadoPagoPreference(Donation donation) {
 
                 // 4. Verificar el estado del pago real
                 String status = payment.getStatus();
-                
+
                 if ("approved".equals(status)) {
                     // ¡ÉXITO! El dinero entró.
                     donation.setPaymentStatus(PaymentStatus.APROBADO);
                     donation.setEstado(DonationStatus.APROBADA); // La donación es válida
-                    
-                    // Aquí podrías guardar el ID del PAGO real (diferente a la preferencia) si quisieras
-                    // donation.setPaymentIdReal(id.toString()); 
+
+                    // Aquí podrías guardar el ID del PAGO real (diferente a la preferencia) si
+                    // quisieras
+                    // donation.setPaymentIdReal(id.toString());
                 } else if ("rejected".equals(status) || "cancelled".equals(status)) {
                     donation.setPaymentStatus(PaymentStatus.RECHAZADO);
                     // No cambiamos el estado general a RECHAZADA aún, damos chance de reintentar
@@ -228,13 +232,13 @@ private Preference createMercadoPagoPreference(Donation donation) {
                 System.out.println("Donación " + donationId + " actualizada con estado de pago: " + status);
             }
         } catch (Exception e) {
-            // Loguear el error pero no lanzar excepción para que MP no siga reintentando infinitamente si es error nuestro
-            e.printStackTrace(); 
+            // Loguear el error pero no lanzar excepción para que MP no siga reintentando
+            // infinitamente si es error nuestro
+            e.printStackTrace();
             System.err.println("Error procesando webhook de MP: " + e.getMessage());
         }
-    } 
-    
-    
+    }
+
     // --- ¡NUEVAS IMPLEMENTACIONES DE HU-13! ---
 
     @Override

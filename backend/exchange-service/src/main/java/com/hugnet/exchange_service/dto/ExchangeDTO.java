@@ -5,6 +5,7 @@ import com.hugnet.exchange_service.entity.ItemType;
 import lombok.Data;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Data
 public class ExchangeDTO {
@@ -17,4 +18,5 @@ public class ExchangeDTO {
     private ExchangeStatus estado;
     private String itemDeseado;
     private LocalDateTime fechaPublicacion;
+    private UUID tokenConfirmacion;
 }
