@@ -92,6 +92,7 @@ public class ActivityServiceImpl implements ActivityService {
         ActivityParticipant ap = new ActivityParticipant(id);
         participantRepo.save(ap);
     }
+    
     //UPDATE ACTIVITY STATUS
     @Override
     @Transactional
@@ -125,4 +126,33 @@ public class ActivityServiceImpl implements ActivityService {
                 .totalParticipants(participantIds.size())
                 .build();
     }
+
+    //GET PARTICIPATION STATS
+    @Override
+    public List<ActivityTypeReportDTO> getParticipationStats() {
+        return repo.getParticipationStatsByType();
+    }
+    
+    //GET ACTIVITIES BY USER ID
+    @Override
+    public List<ActivityDTO> getActivitiesByUserId(Long userId) {
+        // 1. Buscar en la tabla intermedia (ActivityParticipant) los IDs
+        List<ActivityParticipant> participaciones = participantRepo.findByIdUserId(userId);
+
+        if (participaciones.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        // 2. Extraer los IDs de las actividades limpiamente
+        List<Long> activityIds = participaciones.stream()
+                .map(p -> p.getId().getActivityId())
+                .collect(Collectors.toList());
+
+        // 3. Buscar las entidades Activity completas
+        List<Activity> activities = repo.findAllById(activityIds);
+
+        // 4. Convertir a DTOs usando el método de lista de tu Mapper
+        return mapper.toDTOList(activities);
+    }
 }
+

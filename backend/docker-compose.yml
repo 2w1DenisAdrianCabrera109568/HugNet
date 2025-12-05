@@ -111,6 +111,12 @@ services:
       - SPRING_DATASOURCE_PASSWORD=5511442233
       - SPRING_JPA_HIBERNATE_DDL_AUTO=update
       - JWT_SECRET=VW5hQ2xhdmVTZWNyZXRhTXV5TGFyZ2FZQ29tcGxlamFQYXJhTWlQcm95ZWN0b0h1Z05ldDIwMjU=
+      - SPRING_MAIL_HOST=sandbox.smtp.mailtrap.io
+      - SPRING_MAIL_PORT=2525
+      - SPRING_MAIL_USERNAME=4f71f8f5753e93
+      - SPRING_MAIL_PASSWORD=ce935c0a3333db
+      - SPRING_MAIL_PROPERTIES_MAIL_SMTP_AUTH=true
+      - SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE=true
     depends_on:
       postgres-db:
         condition: service_healthy

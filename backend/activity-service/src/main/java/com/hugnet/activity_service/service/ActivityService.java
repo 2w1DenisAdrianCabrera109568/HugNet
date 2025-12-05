@@ -16,4 +16,6 @@ public interface ActivityService {
     void joinActivity(Long activityId, Long userId);
     void updateStatus(Long activityId, ActivityStatus newStatus);
     ActivityAttendanceDTO getAttendanceData(Long activityId);
+    List<ActivityDTO> getActivitiesByUserId(Long userId);
+    List<ActivityTypeReportDTO> getParticipationStats();
 }

@@ -23,7 +23,7 @@
       <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#faqAccordion">
         <div class="accordion-body">
           Un <strong>Prestador</strong> es un rol especial dentro de HugNet (añadido en el Sprint 3) que te permite publicar bienes (ej: "Apuntes") o servicios (ej: "Clases de Inglés") para intercambiar con otros miembros de la comunidad.<br><br>
-          Actualmente, la asignación del rol <strong>PRESTADOR</strong> es manejada por un <strong>ADMINISTRADOR</strong> (vía endpoint <code>PATCH /api/users/{id}/role</code>) para mantener la seguridad.
+          Actualmente, la asignación del rol <strong>PRESTADOR</strong> es manejada por un <strong>ADMINISTRADOR</strong> para mantener la seguridad. Para poder acceder a esta nivel debe habalar con la administracion en persona. En un futuro, planeamos automatizar este proceso mediante la verificación de identidad. facilitaremos el proceso pudiendo realizar la solicitud mediante la app.
         </div>
       </div>
     </div>
@@ -36,7 +36,7 @@
       </h2>
       <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingThree" data-bs-parent="#faqAccordion">
         <div class="accordion-body">
-          Una vez que tienes el rol <strong>PRESTADOR</strong>, puedes publicar tus ítems (HU-08). Otros usuarios podrán ver tu publicación y "Solicitar" el intercambio (HU-09). Cuando lo solicitan, el ítem pasa a estado <strong>RESERVADO</strong>. La entrega se confirma mediante un QR (HU-11).
+          Una vez que tienes el rol <strong>PRESTADOR</strong>, puedes publicar tus ítems o servicios. Otros usuarios podrán ver tu publicación y "Solicitar" el intercambio. Cuando lo solicitan, el ítem pasa a estado <strong>RESERVADO</strong>. La entrega se confirma mediante un QR.
         </div>
       </div>
     </div>
@@ -44,12 +44,12 @@
     <div class="accordion-item">
       <h2 class="accordion-header" id="headingFour">
         <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFour" aria-expanded="false" aria-controls="collapseFour">
-          ¿Cómo funcionan las Donaciones Monetarias (Sprint 4)?
+          ¿Cómo funcionan las Donaciones Monetarias?
         </button>
       </h2>
       <div id="collapseFour" class="accordion-collapse collapse" aria-labelledby="headingFour" data-bs-parent="#faqAccordion">
         <div class="accordion-body">
-          Las donaciones monetarias (HU-14) se gestionarán a través de una pasarela de pago segura (MercadoPago en modo Sandbox). Cuando realices una donación, se creará un link de pago. Utilizaremos Webhooks para confirmar automáticamente que el pago fue <strong>APROBADA</strong> (HU-15).
+          Las donaciones monetarias se gestionan a través de una pasarela de pago segura (MercadoPago). Cuando quieras realizar una domacion monetaria puedes dirigirte a la seccion <strong>TU APORTE</strong> donde podras vizualizar las campañas a las que puedes aportar, mediante una ventana emergente podras elegir el monto con el cual brindar tu aporte, en caso de que quieras aportar un monto mayor deberas comunicarte con un coordinador para que se te asigne como Sponsor. 
         </div>
       </div>
     </div>
