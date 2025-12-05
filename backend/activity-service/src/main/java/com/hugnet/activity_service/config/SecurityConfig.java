@@ -6,6 +6,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -17,30 +18,22 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    // 2. INYECTAMOS el filtro
-    private final JwtAuthenticationFilter jwtAuthFilter;
+    private final GatewayHeadersAuthenticationFilter gatewayHeadersFilter;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf.disable())
-
-
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(auth -> auth
-                        // 4. CORREGIMOS la seguridad
-                        .requestMatchers("/v3/api-docs/**").permitAll() // Permitimos Swagger
-                        .requestMatchers("/swagger-ui/**").permitAll()
-                        .requestMatchers("/h2-console/**").permitAll() // Permitimos H2
-
-                        .anyRequest().authenticated() // ¡TODO LO DEMÁS requiere un token!
-                )
-                // 5. AÑADIMOS el filtro a la cadena
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
-
-                .headers(headers -> headers.frameOptions(frame -> frame.disable()));
+            .csrf(AbstractHttpConfigurer::disable) // Lambda syntax moderna
+            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/h2-console/**").permitAll()
+                .anyRequest().authenticated()
+            )
+            // Agregamos el filtro de cabeceras
+            .addFilterBefore(gatewayHeadersFilter, UsernamePasswordAuthenticationFilter.class)
+            .headers(headers -> headers.frameOptions(frame -> frame.disable())); // Para H2
 
         return http.build();
     }
-
 }
+

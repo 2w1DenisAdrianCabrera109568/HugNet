@@ -2,6 +2,7 @@ package com.hugnet.activity_service.controller;
 
 import com.hugnet.activity_service.dto.ActivityAttendanceDTO;
 import com.hugnet.activity_service.dto.ActivityDTO;
+import com.hugnet.activity_service.dto.ActivityTypeReportDTO;
 import com.hugnet.activity_service.dto.CreateActivityDTO;
 import com.hugnet.activity_service.service.ActivityService;
 import lombok.*;
@@ -31,9 +32,17 @@ public class ActivityController {
         return ResponseEntity.ok(activityService.getById(id));
     }
 
-    //Create activity
+  
     @PostMapping
-    public ResponseEntity<ActivityDTO> create(@RequestBody CreateActivityDTO dto) {
+    @PreAuthorize("hasRole('COORDINADOR')") 
+    public ResponseEntity<ActivityDTO> create(
+            @RequestBody CreateActivityDTO dto,
+            @RequestHeader("X-User-Id") String userId // <--- Solo lo agregamos aquí
+    ) {
+        // Asignamos el Coordinador usando el ID que viene seguro desde el Gateway
+        dto.setCoordinadorId(Long.parseLong(userId));
+        
+        // Pasamos el DTO tal cual al servicio (respetando tu lógica)
         return ResponseEntity.ok(activityService.createActivity(dto));
     }
 
@@ -64,7 +73,6 @@ public class ActivityController {
     }
 
     //Get participants of an activity
-
     @PreAuthorize("hasAnyRole('COORDINADOR', 'ADMINISTRADOR')")
     @GetMapping("/{id}/participants")
     public ResponseEntity<List<Long>> participants(@PathVariable Long id) {
@@ -75,6 +83,19 @@ public class ActivityController {
     @GetMapping("/{activityId}/attendance-data")
     public ResponseEntity<ActivityAttendanceDTO> getAttendanceDataForReport(@PathVariable Long activityId) {
         return ResponseEntity.ok(activityService.getAttendanceData(activityId));
+    }
+
+    // --- Endpoint para 'Mis Actividades' ---
+  @GetMapping("/user/{userId}")
+    @PreAuthorize("hasAnyRole('USUARIO', 'COORDINADOR', 'ADMINISTRADOR', 'PRESTADOR')")
+    public ResponseEntity<List<ActivityDTO>> getUserActivities(@PathVariable Long userId) {
+        return ResponseEntity.ok(activityService.getActivitiesByUserId(userId));
+    }
+
+    //GET PARTICIPATION STATS
+    @GetMapping("/stats/participation")
+    public ResponseEntity<List<ActivityTypeReportDTO>> getParticipationStats() {
+        return ResponseEntity.ok(activityService.getParticipationStats());
     }
 
 }
