@@ -641,41 +641,6 @@ async function submitCreateActivity() {
     }
 }
 
-// --- DONACIONES GESTIÓN ---
-async function fetchDonations(title) {
-  document.getElementById("content-title").textContent = title;
-  const area = document.getElementById("content-area");
-  area.innerHTML = `<div class="p-4">Cargando...</div>`;
-  const headers = getAuthHeaders();
-  if(!headers) return;
-  try {
-      const res = await fetch(`${API_URL}/donations/pending`, { headers });
-      if(res.ok) {
-          const data = await res.json();
-          renderDonationsList(data, area);
-      } else { area.innerHTML = `<div class="alert alert-warning">Error acceso.</div>`; }
-  } catch(e) { area.innerHTML = `<div class="alert alert-danger">Error conexión.</div>`; }
-}
-
-function renderDonationsList(list, container) {
-    if(!list.length) { container.innerHTML = `<div class="p-4 text-muted">Sin pendientes.</div>`; return; }
-    const html = list.map(d => `
-      <div class="col-md-6 col-lg-4">
-        <div class="card h-100 shadow-sm">
-            <div class="card-body">
-                <h5>${d.descripcionItem || 'Donación'}</h5>
-                <p class="text-muted mb-1">Tipo: ${d.itemType} | Cant: ${d.cantidad}</p>
-                <span class="badge bg-warning text-dark">${d.estado}</span>
-                <div class="mt-3">
-                    <button class="btn btn-sm btn-success" onclick="approveDonation(${d.id})">Aprobar</button>
-                    <button class="btn btn-sm btn-danger" onclick="rejectDonation(${d.id})">Rechazar</button>
-                </div>
-            </div>
-        </div>
-      </div>`).join('');
-    container.innerHTML = `<div class="card-body p-4"><div class="row g-3">${html}</div></div>`;
-}
-
 // --- MÓDULO: GESTIÓN DE USUARIOS (ADMIN) ---
 
 async function loadUsersPage() {
@@ -946,6 +911,41 @@ window.showActivityQR = function(id, titulo) {
 // NUEVAS FUNCIONES (SPRINT 4: TU APORTE & SPRINT 3: INTERCAMBIOS)
 // =========================
 
+// --- DONACIONES GESTIÓN ---
+async function fetchDonations(title) {
+  document.getElementById("content-title").textContent = title;
+  const area = document.getElementById("content-area");
+  area.innerHTML = `<div class="p-4">Cargando...</div>`;
+  const headers = getAuthHeaders();
+  if(!headers) return;
+  try {
+      const res = await fetch(`${API_URL}/donations/pending`, { headers });
+      if(res.ok) {
+          const data = await res.json();
+          renderDonationsList(data, area);
+      } else { area.innerHTML = `<div class="alert alert-warning">Error acceso.</div>`; }
+  } catch(e) { area.innerHTML = `<div class="alert alert-danger">Error conexión.</div>`; }
+}
+
+function renderDonationsList(list, container) {
+    if(!list.length) { container.innerHTML = `<div class="p-4 text-muted">Sin pendientes.</div>`; return; }
+    const html = list.map(d => `
+      <div class="col-md-6 col-lg-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body">
+                <h5>${d.descripcionItem || 'Donación'}</h5>
+                <p class="text-muted mb-1">Tipo: ${d.itemType} | Cant: ${d.cantidad}</p>
+                <span class="badge bg-warning text-dark">${d.estado}</span>
+                <div class="mt-3">
+                    <button class="btn btn-sm btn-success" onclick="approveDonation(${d.id})">Aprobar</button>
+                    <button class="btn btn-sm btn-danger" onclick="rejectDonation(${d.id})">Rechazar</button>
+                </div>
+            </div>
+        </div>
+      </div>`).join('');
+    container.innerHTML = `<div class="card-body p-4"><div class="row g-3">${html}</div></div>`;
+}
+
 // --- TU APORTE (VISTA DE TARJETAS) ---
 async function loadDonationCardsPage(title) {
   const contentTitle = document.getElementById("content-title");
@@ -1014,7 +1014,8 @@ function createDonationCardHtml({ id, titulo, desc, icon, badge }) {
 // --- FLUJO DE DONACIÓN (MODAL CON MONTOS FIJOS) ---
 
 
-window.initiateDonationFlow = async function(activityId, activityTitle) {
+/* window.initiateDonationFlow = async function(activityId, activityTitle) {
+
   // Paso 1: Selector de monto
   const { value: montoStr } = await Swal.fire({
     title: `Aporte para: ${activityTitle}`,
@@ -1123,6 +1124,204 @@ window.initiateDonationFlow = async function(activityId, activityTitle) {
     Swal.fire('Error', 'Error de conexión.', 'error'); 
   }
 };
+ */
+
+window.initiateDonationFlow = async function(activityId, activityTitle) {
+    // PASO 1: Botones en lugar de Radio
+    const result = await Swal.fire({
+        title: `Aportar a: ${activityTitle}`,
+        text: '¿Cómo deseas colaborar?',
+        icon: 'question',
+        
+        // Configuración de los botones
+        showCancelButton: true,
+        showDenyButton: true,
+        
+        confirmButtonText: '💵 Dinero (MP)',
+        confirmButtonColor: '#0d6efd', // Azul Bootstrap
+        
+        denyButtonText: '📦 Especie (Bienes)',
+        denyButtonColor: '#198754',    // Verde Bootstrap
+        
+        cancelButtonText: 'Cancelar'
+    });
+
+    // Lógica de decisión basada en qué botón tocó
+    if (result.isConfirmed) {
+        // Clic en "Dinero"
+        await handleMonetaryDonation(activityId, activityTitle);
+    } else if (result.isDenied) {
+        // Clic en "Especie"
+        await handleEspecieDonation(activityId, activityTitle);
+    }
+    // Si cancela (dismiss), no hace nada
+};
+
+// --- LÓGICA DONACIÓN MONETARIA (Tu código original adaptado) ---
+async function handleMonetaryDonation(activityId, activityTitle) {
+    const { value: montoStr } = await Swal.fire({
+        title: 'Monto del Aporte',
+        text: 'Selecciona el monto de tu colaboración',
+        input: 'radio',
+        inputOptions: {
+            '500': '$ 500 (Colaborador)',
+            '1000': '$ 1.000 (Amigo)',
+            '2000': '$ 2.000 (Protector)'
+        },
+        inputValidator: (value) => { if (!value) return 'Debes seleccionar un monto'; },
+        showCancelButton: true,
+        confirmButtonText: 'Generar QR de Pago',
+        cancelButtonText: 'Volver'
+    });
+
+    if (!montoStr) return;
+
+    // Payload para Dinero
+    const payload = {
+        tipoDonacion: 'MONETARIA',
+        monto: parseFloat(montoStr),
+        descripcionItem: `Aporte Web (${activityTitle})`,
+        cantidad: 1,
+        itemType: null
+    };
+
+    // Llamada al Backend
+    await sendDonationToBackend(payload, activityId, true); 
+}
+
+// --- LÓGICA DONACIÓN EN ESPECIE (Nuevo) ---
+async function handleEspecieDonation(activityId, activityTitle) {
+    const { value: formValues } = await Swal.fire({
+        title: 'Donación en Especie',
+        // Inyectamos HTML para tener 2 campos en la misma fila
+        html: `
+            <div class="row g-2 align-items-center">
+                <div class="col-9">
+                    <label for="swal-desc" class="form-label small text-start w-100 mb-1">Descripción</label>
+                    <input id="swal-desc" class="form-control" placeholder="Ej: Paquetes de arroz, Abrigos...">
+                </div>
+                <div class="col-3">
+                    <label for="swal-cant" class="form-label small text-start w-100 mb-1">Cant.</label>
+                    <input id="swal-cant" type="number" class="form-control text-center" value="1" min="1">
+                </div>
+            </div>
+        `,
+        focusConfirm: false,
+        showCancelButton: true,
+        confirmButtonText: 'Confirmar',
+        confirmButtonColor: '#198754',
+        cancelButtonText: 'Cancelar',
+        // Lógica para capturar y validar los datos manualmente
+        preConfirm: () => {
+            const descripcion = document.getElementById('swal-desc').value;
+            const cantidad = document.getElementById('swal-cant').value;
+
+            if (!descripcion) {
+                Swal.showValidationMessage('❌ Falta la descripción del ítem');
+                return false;
+            }
+            if (!cantidad || parseInt(cantidad) < 1) {
+                Swal.showValidationMessage('❌ La cantidad debe ser mayor a 0');
+                return false;
+            }
+
+            return { descripcion, cantidad };
+        }
+    });
+
+    // Si el usuario cancela, formValues será undefined
+    if (!formValues) return;
+
+    // Payload actualizado con la cantidad real
+    const payload = {
+        tipoDonacion: 'ESPECIE',
+        monto: null, 
+        descripcionItem: formValues.descripcion,
+        cantidad: parseInt(formValues.cantidad), // <--- ¡Dato real!
+        itemType: 'BIEN' 
+    };
+
+    // Llamada al Backend
+    await sendDonationToBackend(payload, activityId, false);
+}
+
+// --- FUNCIÓN CENTRALIZADA PARA ENVIAR AL BACKEND ---
+async function sendDonationToBackend(payload, activityId, isMonetary) {
+    const headers = getAuthHeaders();
+    if (!headers) return;
+
+    // Agregamos activityId si existe
+    if (activityId && activityId !== 'null' && activityId !== null) {
+        payload.activityId = parseInt(activityId);
+    }
+
+    Swal.fire({ title: 'Procesando...', didOpen: () => Swal.showLoading() });
+
+    try {
+        console.log("📦 Payload enviado:", JSON.stringify(payload));
+
+        const res = await fetch(`${API_URL}/donations`, {
+            method: "POST",
+            headers,
+            body: JSON.stringify(payload)
+        });
+
+        if (res.ok) {
+            const data = await res.json();
+
+            if (isMonetary) {
+                // TU LÓGICA DE QR / MERCADO PAGO
+                Swal.fire({
+                    title: '¡Listo para aportar!',
+                    html: `
+                      <p>1. Escanea el QR o toca "Ir a Pagar".</p>
+                      <p>2. Cuando termines, vuelve aquí y confirma.</p>
+                      <div id="payment-qr" class="d-flex justify-content-center my-3"></div>
+                      <a href="${data.paymentUrl}" class="btn btn-primary rounded-pill mb-3" target="_blank">
+                         <i class="bi bi-credit-card-2-front"></i> Ir a Pagar en MercadoPago
+                      </a>
+                    `,
+                    showDenyButton: true,
+                    confirmButtonText: 'Cerrar',
+                    denyButtonText: '✅ ¡Ya pagué!',
+                    denyButtonColor: '#198754',
+                    didOpen: () => {
+                        new QRCode(document.getElementById("payment-qr"), { text: data.paymentUrl, width: 150, height: 150 });
+                    }
+                }).then((result) => {
+                    if (result.isDenied) {
+                        Swal.fire('¡Muchas Gracias!', 'Estamos verificando tu aporte.', 'success')
+                            .then(() => window.location.href = "dashboard.html?view=Tu%20Aporte");
+                    }
+                });
+
+            } else {
+                // ÉXITO PARA ESPECIE (Mensaje simple)
+                Swal.fire({
+                    title: '¡Muchas Gracias!',
+                    text: 'Tu donación en especie ha sido registrada. Nos pondremos en contacto para coordinar.',
+                    icon: 'success',
+                    confirmButtonText: 'Genial'
+                }).then(() => {
+                    // Recargar o redirigir
+                    window.location.reload(); 
+                });
+            }
+
+        } else {
+            // MANEJO DE ERRORES
+            const err = await res.json();
+            console.error("Error Backend:", err);
+            let msg = err.message || 'Error al procesar la donación';
+            if (err.errors) msg += "\n" + err.errors.map(e => e.defaultMessage).join("\n");
+            Swal.fire('Error', msg, 'error');
+        }
+
+    } catch (e) {
+        console.error(e);
+        Swal.fire('Error', 'Error de conexión con el servidor.', 'error');
+    }
+}
 
 // --- INTERCAMBIOS (SPRINT 3) ---
 async function loadExchangePage(title) {
