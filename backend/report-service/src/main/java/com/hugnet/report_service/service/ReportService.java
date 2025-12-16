@@ -23,4 +23,6 @@ public interface ReportService {
     List<UserRankingDTO> getUserRanking(String token, String userId, String userRol);
 
     List<ParticipantDetailDTO> getParticipantsList(Long activityId, String token, String userId, String userRol);
+
+    BalanceReportDTO getBalanceDetail(Long activityId, String token, String userId, String userRol);
 }

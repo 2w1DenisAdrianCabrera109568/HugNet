@@ -1,5 +1,7 @@
 package com.hugnet.report_service.dto;
 
+import java.time.LocalDateTime;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import lombok.Data;
@@ -9,7 +11,8 @@ import lombok.Data;
 public class ActivitySummaryDTO {
     
     private Long activityId; 
-    private String titulo;       
+    private String titulo; 
+    private LocalDateTime fechaInicio;      
     // Lo mapeamos como String para que sea fácil de agrupar, aunque venga de un Enum.
     private String tipoActividad;     
     private String estado; // Mapeamos el Enum ActivityStatus a String automáticamente

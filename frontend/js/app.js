@@ -1371,7 +1371,7 @@ window.switchReportTab = async function(tabName) {
   
   // Para sponsors no cargamos nada automático porque requiere ingresar ID primero 
 };
-
+// --- REPORTE 1: RANKING DE USUARIOS ---
 async function fetchUserRanking() {
   const container = document.getElementById("rankingTableBody");
   const headers = getAuthHeaders();
@@ -1433,62 +1433,417 @@ function renderRankingTable(users, container) {
 
     container.innerHTML = html;
 }
+// --- REPORTE 2: BALANCE FINANCIERO ---
 
-async function fetchBalanceReport() {
-  const container = document.getElementById("balanceTableBody");
-  const globalDisplay = document.getElementById("global-balance-display");
-  const headers = getAuthHeaders();
-  
-  try {
-    const res = await fetch(`${API_URL}/reports/financial-balance`, { headers });
-    if (res.ok) {
-      const reportData = await res.json();
-      renderBalanceTable(reportData, container, globalDisplay);
-    } else { throw new Error("Error API"); }
-  } catch (e) {
-    container.innerHTML = `<tr><td colspan="4" class="text-danger text-center">No se pudo cargar el balance financiero.</td></tr>`;
-  }
+// 2. Formateador de Moneda unificado
+const formatterAR = new Intl.NumberFormat('es-AR', {
+    style: 'currency',
+    currency: 'ARS',
+    minimumFractionDigits: 2
+});
+function formatCurrency(amount) {
+    return formatterAR.format(amount || 0);
 }
+// Formateador de fecha unificado
+function formatearFechaReporte(fechaString) {
+    if (!fechaString) return '-';
+    // Crea fecha sin convertir zona horaria, tomando la parte T como corte si es necesario
+    const fecha = new Date(fechaString);
+    return fecha.toLocaleDateString('es-AR', {
+        day: '2-digit', month: '2-digit', year: 'numeric'
+    });
+}
+// Variable global para almacenar todos los datos del reporte
+let allBalanceData = [];
+// Estado inicial del ordenamiento: por fecha, descendente (lo más nuevo primero)
+let currentSort = { key: 'fechaInicio', direction: 'desc' }; 
 
-function renderBalanceTable(data, container, globalDisplay) {
-  if (!data || data.length === 0) {
-    container.innerHTML = `<tr><td colspan="4" class="text-center text-muted">No hay movimientos registrados.</td></tr>`;
-    globalDisplay.textContent = "$ 0.00";
-    return;
-  }
-
-  let html = "";
-  let totalGlobal = 0;
-
-  data.forEach(item => {
-    // CORRECCIÓN 1: Usar el nombre exacto que envía Java (totalIngresos)
-    const ingresos = item.totalIngresos || 0; 
-    totalGlobal += ingresos;
-
-    // Nota: El DTO actual no tiene campo 'status', así que mostrará '-'
-    // Si quieres mostrar el estado, deberías agregarlo al BalanceReportDTO en Java.
+// --- FUNCIÓN DE ORDENAMIENTO (Trigger desde HTML) ---
+function handleSort(key) {
+    // Si hago click en la misma columna, invierto el orden
+    if (currentSort.key === key) {
+        currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+    } else {
+        // Si cambio de columna, empiezo ascendente
+        currentSort.key = key;
+        currentSort.direction = 'asc';
+    }
     
-    html += `
-      <tr>
-        <td>
-          <span class="fw-bold">${item.activityTitle || 'Actividad sin nombre'}</span>
-        </td>
-        <td><span class="badge bg-light text-dark border">${item.status || '-'}</span></td>
-        <td class="text-end text-success fw-bold">
-          $ ${ingresos.toLocaleString('es-AR', {minimumFractionDigits: 2})}
-        </td>
-        <td class="text-end">
-          <button class="btn btn-sm btn-outline-secondary" onclick="Swal.fire('Detalle', 'El detalle de transacciones se implementará en la v2', 'info')">
-            <i class="bi bi-search"></i>
-          </button>
-        </td>
-      </tr>`;
-  });
+    // Actualizamos visualmente las flechitas (Opcional, pero ayuda UX)
+    updateSortIcons(key, currentSort.direction);
 
-  container.innerHTML = html;
-  globalDisplay.textContent = `$ ${totalGlobal.toLocaleString('es-AR', {minimumFractionDigits: 2})}`;
+    // Re-aplicamos filtros y orden
+    applyFilters();
+}
+function applyFilters() {
+    // 1. Obtener valores de los inputs
+    const term = document.getElementById("filterName")?.value.toLowerCase() || "";
+    const dateFromVal = document.getElementById("filterDateFrom")?.value || "";
+    const dateToVal = document.getElementById("filterDateTo")?.value || "";
+
+    // 2. FILTRAR
+    let resultData = allBalanceData.filter(item => {
+        // Nombre
+        const nameMatch = (item.tituloActividad || '').toLowerCase().includes(term);
+        // Fechas
+        let dateMatch = true;
+        if (item.fechaInicio) {
+            const itemDateStr = item.fechaInicio.split('T')[0]; 
+            if (dateFromVal && itemDateStr < dateFromVal) dateMatch = false;
+            if (dateToVal && itemDateStr > dateToVal) dateMatch = false;
+        }
+        return nameMatch && dateMatch;
+    });
+
+    // 3. ORDENAR (Aquí ocurre la magia)
+    resultData.sort((a, b) => {
+        let valA = a[currentSort.key];
+        let valB = b[currentSort.key];
+
+        // Manejo de nulos para que no rompa
+        if (valA == null) valA = "";
+        if (valB == null) valB = "";
+
+        // Comparación según tipo de dato
+        if (typeof valA === 'string') {
+            // Comparación alfabética (funciona para fechas ISO también)
+            return currentSort.direction === 'asc' 
+                ? valA.localeCompare(valB) 
+                : valB.localeCompare(valA);
+        } else {
+            // Comparación numérica
+            return currentSort.direction === 'asc' 
+                ? valA - valB 
+                : valB - valA;
+        }
+    });
+
+    // 4. ACTUALIZAR TOTAL GLOBAL (La tarjeta verde arriba)
+    updateGlobalTotal(resultData);
+
+    // 5. RENDERIZAR
+    renderBalanceTable(resultData);
+}
+// Auxiliar: Sumar el total de lo que se ve en pantalla
+function updateGlobalTotal(data) {
+    const total = data.reduce((sum, item) => sum + (item.totalIngresosMonetarios || 0), 0);
+    const display = document.getElementById("global-balance-display");
+    if(display) display.innerText = formatCurrency(total);
 }
 
+// Auxiliar: Actualizar iconos de flechas
+function updateSortIcons(activeKey, direction) {
+    // Reseteamos todos los iconos a "arrow-down-up" (neutro)
+    ['tituloActividad', 'fechaInicio', 'totalIngresosMonetarios', 'totalGastos'].forEach(key => {
+        const icon = document.getElementById(`sort-icon-${key}`);
+        if(icon) icon.className = "bi bi-arrow-down-up small text-muted ms-1";
+    });
+
+    // Ponemos el activo
+    const activeIcon = document.getElementById(`sort-icon-${activeKey}`);
+    if (activeIcon) {
+        activeIcon.className = direction === 'asc' 
+            ? "bi bi-arrow-up-circle-fill small text-primary ms-1" 
+            : "bi bi-arrow-down-circle-fill small text-primary ms-1";
+    }
+}
+// Función para limpiar filtros
+function clearFilters() {
+    document.getElementById("filterName").value = "";
+    document.getElementById("filterDateFrom").value = "";
+    document.getElementById("filterDateTo").value = "";
+    applyFilters();
+}
+// Función para cargar el reporte completo
+async function fetchBalanceReport() {
+    const tbody = document.getElementById("balanceTableBody"); // Asegúrate que este ID coincida en tu HTML
+    const headers = getAuthHeaders(); 
+    
+    // Loader
+    tbody.innerHTML = `<tr><td colspan="6" class="text-center">Cargando reporte financiero...</td></tr>`;
+
+    try {
+        const res = await fetch(`${API_URL}/reports/financial-balance`, { headers });
+        
+        if (res.ok) {
+            // Guardamos el JSON (List<BalanceReportDTO>) en la variable global
+            allBalanceData = await res.json();
+            
+            console.log("Datos de balance cargados:", allBalanceData); // Log para depuración
+            
+            // Renderizamos aplicando filtros (inicialmente vacíos)
+            applyFilters(); 
+            
+        } else {
+            throw new Error("Error al obtener el reporte.");
+        }
+    } catch (e) {
+        console.error(e);
+        tbody.innerHTML = `<tr><td colspan="6" class="text-danger text-center">Error cargando reporte. Intente nuevamente.</td></tr>`;
+    }
+}
+// 7. Renderizado de la Tabla
+function renderBalanceTable(data) {
+    const tbody = document.getElementById('balanceTableBody');
+    tbody.innerHTML = ''; 
+
+    if (!data || data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No se encontraron resultados</td></tr>';
+        return;
+    }
+
+    data.forEach(item => {
+        // Mapeo directo de propiedades del DTO Java
+        const id = item.actividadId;
+        const titulo = item.tituloActividad || 'Sin Título';
+        const fInicio = formatearFechaReporte(item.fechaInicio);
+        const fFin = formatearFechaReporte(item.fechaFin);
+        const ingresos = item.totalIngresosMonetarios; // DTO: totalIngresosMonetarios
+        const gastos = item.totalGastos;             // DTO: totalGastos
+
+        const row = `
+            <tr>
+                <td>${titulo}</td>
+                <td>${fInicio}</td>
+                <td>${fFin}</td>
+                <td class="text-success fw-bold">${formatCurrency(ingresos)}</td>
+                <td class="text-danger fw-bold">${formatCurrency(gastos)}</td>
+                <td>
+                    <button class="btn btn-sm btn-primary" onclick="verDetalleBalance(${id})">
+                        <i class="bi bi-eye"></i> Ver Detalle
+                    </button>
+                </td>
+            </tr>
+        `;
+        tbody.innerHTML += row;
+    });
+}
+// 8. Ver Detalle (Modal)
+function buildDetailHtml(data) {
+    // Formateo de fechas
+    const fInicio = data.fechaInicio ? new Date(data.fechaInicio).toLocaleDateString() : 'N/A';
+    const fFin = data.fechaFin ? new Date(data.fechaFin).toLocaleDateString() : 'N/A';
+    // Saneamos el nombre para el archivo PDF (opcional, por si quieres usarlo en el nombre del archivo)
+    const nombreArchivo = `Balance_${(data.tituloActividad || 'Actividad').replace(/[^a-z0-9]/gi, '_')}`;
+
+    // --- INICIO DEL CONTENEDOR PRINCIPAL ---
+    // Agregamos un ID específico 'reporte-contenido' para encontrarlo fácil al imprimir
+    let html = `<div id="reporte-contenido" class="p-2 bg-white">`;
+
+    // 1. CABECERA (Título, Fechas, Estado y BOTÓN)
+    html += `
+    <div class="d-flex justify-content-between align-items-start mb-4 border-bottom pb-3">
+        <div>
+            <h4 class="fw-bold mb-1 text-primary">${data.tituloActividad || 'Actividad Sin Título'}</h4>
+            <div class="text-muted small">
+                <i class="bi bi-calendar-event me-1"></i> 
+                <strong>Periodo:</strong> ${fInicio} - ${fFin}
+            </div>
+            <div class="mt-2">
+                <span class="badge bg-${data.estado === 'FINALIZADA' ? 'success' : 'secondary'}">${data.estado || 'ESTADO'}</span>
+            </div>
+        </div>
+        <div>
+            <button class="btn btn-danger btn-sm d-flex align-items-center gap-2" 
+                    onclick="generarPDFBalance('${nombreArchivo}')"
+                    data-html2canvas-ignore="true">
+                <i class="bi bi-file-earmark-pdf-fill"></i> Descargar PDF
+            </button>
+        </div>
+    </div>`;
+
+    // 2. RESUMEN DE TOTALES (Tarjetas)
+    html += `
+    <div class="row mb-4 g-3">
+        <div class="col-6">
+            <div class="p-3 border rounded bg-light border-start border-4 border-success shadow-sm">
+                <small class="text-uppercase text-muted fw-bold" style="font-size:0.7rem">Total Ingresos</small>
+                <h5 class="text-success fw-bold mb-0">${formatCurrency(data.totalIngresosMonetarios)}</h5>
+            </div>
+        </div>
+        <div class="col-6">
+            <div class="p-3 border rounded bg-light border-start border-4 border-danger shadow-sm">
+                <small class="text-uppercase text-muted fw-bold" style="font-size:0.7rem">Total Gastos</small>
+                <h5 class="text-danger fw-bold mb-0">${formatCurrency(data.totalGastos)}</h5>
+            </div>
+        </div>
+    </div>`;
+
+    // 3. SECCIÓN: INGRESOS MONETARIOS
+    html += `<div class="mb-4">
+        <h6 class="text-success fw-bold mb-2 border-bottom pb-2"><i class="bi bi-cash-coin me-1"></i> Donaciones Monetarias</h6>`;
+    
+    if (data.ingresosMonetarios && data.ingresosMonetarios.length > 0) {
+        html += `<div class="table-responsive border rounded">
+                    <table class="table table-sm table-striped mb-0 small align-middle">
+                        <thead class="table-light"><tr><th>Descripción</th><th class="text-center">Cant.</th><th class="text-end">Monto</th></tr></thead>
+                        <tbody>${data.ingresosMonetarios.map(d => `
+                            <tr>
+                                <td>${d.descripcionItem || 'Aporte monetario'}</td>
+                                <td class="text-center">${d.cantidad || 1}</td>
+                                <td class="text-end fw-bold text-success">+${formatCurrency(d.monto)}</td>
+                            </tr>`).join('')}
+                        </tbody>
+                    </table>
+                 </div>`;
+    } else {
+        html += `<div class="alert alert-light border py-2 small">Sin ingresos monetarios registrados.</div>`;
+    }
+    html += `</div>`;
+
+    // 4. SECCIÓN: GASTOS
+    html += `<div class="mb-4">
+        <h6 class="text-danger fw-bold mb-2 border-bottom pb-2"><i class="bi bi-receipt me-1"></i> Gastos Operativos</h6>`;
+    
+    if (data.egresosGastos && data.egresosGastos.length > 0) {
+        html += `<div class="table-responsive border rounded">
+                    <table class="table table-sm table-striped mb-0 small align-middle">
+                        <thead class="table-light"><tr><th>Concepto</th><th class="text-center">Fecha</th><th class="text-center">Nro. Factura</th><th class="text-end">Monto</th></tr></thead>
+                        <tbody>${data.egresosGastos.map(g => `
+                            <tr>
+                                <td>${g.descripcion || 'Gasto operativo'}</td>
+                                <td class="text-center text-muted">${g.fechaGasto ? new Date(g.fechaGasto).toLocaleDateString() : '-'}</td>
+                                <td>${g.nroFactura || 'Nro. de Factura'}</td>
+                                <td class="text-end fw-bold text-danger">-${formatCurrency(g.monto)}</td>
+                            </tr>`).join('')}
+                        </tbody>
+                    </table>
+                 </div>`;
+    } else {
+        html += `<div class="alert alert-light border py-2 small">Sin gastos registrados.</div>`;
+    }
+    html += `</div>`;
+
+    // 5. SECCIÓN: DONACIONES EN ESPECIE
+    html += `<div class="mb-4">
+        <h6 class="text-primary fw-bold mb-2 border-bottom pb-2"><i class="bi bi-box-seam me-1"></i> Donaciones en Especie</h6>`;
+    
+    if (data.ingresosBienes && data.ingresosBienes.length > 0) {
+        html += `<div class="table-responsive border rounded">
+                    <table class="table table-sm table-striped mb-0 small align-middle">
+                        <thead class="table-light"><tr><th>Item</th><th class="text-center">Cant.</th><th>Estado</th></tr></thead>
+                        <tbody>${data.ingresosBienes.map(d => `
+                            <tr>
+                                <td class="fw-bold">${d.descripcionItem || 'Sin descripción'}</td>
+                                <td class="text-center">${d.cantidad || 1}</td>
+                                <td><span class="badge bg-info text-dark" style="font-size:0.7em">${d.estado}</span></td>
+                            </tr>`).join('')}
+                        </tbody>
+                    </table>
+                 </div>`;
+    } else {
+        html += `<div class="alert alert-light border py-2 small">Sin donaciones en especie.</div>`;
+    }
+    html += `</div>`;
+
+    // 6. SECCIÓN: SPONSORS
+    html += `<div class="mb-2">
+        <h6 class="text-warning text-dark fw-bold mb-2 border-bottom pb-2"><i class="bi bi-star-fill me-1"></i> Sponsors & Colaboradores</h6>`;
+    
+    if (data.aportesSponsors && data.aportesSponsors.length > 0) {
+        html += `<ul class="list-group list-group-flush border rounded">
+                    ${data.aportesSponsors.map(s => `
+                        <li class="list-group-item d-flex justify-content-between align-items-center py-2">
+                            <div>
+                                <div class="fw-bold small">${s.nombre || s.nombreEmpresa || 'Sponsor'}</div>
+                                <small class="text-muted fst-italic">${s.descripcionAporte || 'Colaboración'}</small>
+                            </div>
+                            <span class="badge bg-light text-dark border">${s.tipo || 'Colaborador'}</span>
+                        </li>
+                    `).join('')}
+                 </ul>`;
+    } else {
+        html += `<div class="alert alert-light border py-2 small">Sin sponsors asignados.</div>`;
+    }
+    html += `</div>`;
+
+    // --- FIN DEL CONTENEDOR ---
+    html += `</div>`; 
+
+    return html;
+}
+
+
+function generarPDFBalance(nombreArchivoPersonalizado) {
+    // 1. Buscamos el elemento por el ID único que definimos en buildDetailHtml
+    const elementToPrint = document.getElementById('reporte-contenido');
+
+    if (!elementToPrint) {
+        alert("Error: No se encuentra el contenido del reporte para generar el PDF.");
+        console.error("No se encontró el elemento #reporte-contenido");
+        return;
+    }
+
+    // 2. Definimos el nombre del archivo
+    const filename = nombreArchivoPersonalizado ? `${nombreArchivoPersonalizado}.pdf` : 'HugNet_Balance.pdf';
+
+    // 3. Configuración (Tu configuración original)
+    const opt = {
+        margin:       0.5,
+        filename:     filename,
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2, useCORS: true, letterRendering: true },
+        jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+    };
+
+    // 4. Generación
+    // El botón de descarga no saldrá porque tiene data-html2canvas-ignore="true" en el HTML
+    html2pdf().set(opt).from(elementToPrint).save();
+}
+// 8. Ver detalle de una actividad específica
+async function verDetalleBalance(activityId) {
+    // 1. Mostrar loader
+    Swal.fire({
+        title: 'Cargando detalle...',
+        text: 'Obteniendo desglose financiero',
+        allowOutsideClick: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
+
+    try {
+        // 2. CORRECCIÓN DE RUTA AQUÍ:
+        // Asumo que tu ReportController tiene arriba @RequestMapping("/api/reports")
+        // Entonces la ruta completa es: /api/reports/balance-detail/{id}
+        const headers = getAuthHeaders();
+        const res = await fetch(`${API_URL}/reports/balance-detail/${activityId}`, { headers });
+
+        if (!res.ok) {
+             // Si el servidor devuelve el error 500 que programaste en el catch del controller,
+             // intentamos leer el mensaje para mostrarlo.
+             const errorText = await res.text(); 
+             throw new Error(errorText || "Error obteniendo el detalle");
+        }
+
+        const detailData = await res.json();
+
+        // 3. Construimos el HTML
+        const htmlContent = buildDetailHtml(detailData);
+
+        // 4. Mostramos el Modal
+        Swal.fire({
+            title: `<h5 class="text-start border-bottom pb-2 text-dark"><i class="bi bi-file-earmark-spreadsheet me-2"></i>${detailData.tituloActividad}</h5>`,
+            html: htmlContent,
+            width: '800px',
+            showConfirmButton: true,
+            confirmButtonText: "Cerrar",
+            confirmButtonColor: "#6c757d",
+            showCloseButton: true,
+            focusConfirm: false
+        });
+
+    } catch (e) {
+        console.error("Error en JS:", e);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error de Carga',
+            text: 'No se pudo cargar el detalle. Revisa la consola para más info.'
+        });
+    }
+}
+
+// --- REPORTE DE STOCK DE ÍTEMS ---
 async function fetchStockReport() {
     const container = document.getElementById("stockTableBody");
     
@@ -1557,26 +1912,112 @@ function renderStockTable(items, container) {
 
     container.innerHTML = html;
 }
-
+// --- REPORTE DE PARTICIPACIÓN POR TIPO DE ACTIVIDAD ---
 async function fetchParticipationReport() {
-    const container = document.getElementById('typesTableBody');
-    container.innerHTML = '<tr><td colspan="4" class="text-center py-5"><div class="spinner-border text-primary"></div></td></tr>';
+    const tableContainer = document.getElementById('typesTableBody');
+    const chartContainer = document.getElementById('participation-chart-container');
+
+    // 1. Mostrar Spinners en AMBOS lados
+    tableContainer.innerHTML = '<tr><td colspan="4" class="text-center py-5"><div class="spinner-border text-primary"></div></td></tr>';
+    if(chartContainer) chartContainer.innerHTML = '<div class="d-flex justify-content-center py-5"><div class="spinner-border text-primary"></div></div>';
 
     try {
         const headers = getAuthHeaders();
-        // Endpoint exacto que me pasaste
         const res = await fetch(`${API_URL}/reports/participation-by-type`, { headers });
 
         if (res.ok) {
-            // Esperamos una LISTA de objetos: [{tipo: "TALLER", cantidad: 5, ...}, ...]
             const data = await res.json();
-            renderParticipationTable(data, container);
+            
+            // 2. Llamamos a TU función de tabla
+            renderParticipationTable(data, tableContainer);
+            
+            // 3. Llamamos a la NUEVA función de gráfico (pasamos copia para no afectar orden)
+            renderChartAndInsight([...data]); 
         } else {
-            container.innerHTML = '<tr><td colspan="4" class="text-center text-danger">No se pudo cargar el reporte.</td></tr>';
+            const errorMsg = '<tr><td colspan="4" class="text-center text-danger">No se pudo cargar el reporte.</td></tr>';
+            tableContainer.innerHTML = errorMsg;
+            if(chartContainer) chartContainer.innerHTML = '<div class="alert alert-danger">Error cargando gráfico.</div>';
         }
     } catch (e) {
         console.error(e);
-        container.innerHTML = '<tr><td colspan="4" class="text-center text-danger">Error de conexión.</td></tr>';
+        tableContainer.innerHTML = '<tr><td colspan="4" class="text-center text-danger">Error de conexión.</td></tr>';
+    }
+}
+function renderChartAndInsight(data) {
+    const chartContainer = document.getElementById('participation-chart-container');
+    const lblPercent = document.getElementById('insight-percent');
+    const lblText = document.getElementById('insight-text');
+
+    // Validaciones básicas
+    if (!chartContainer) return; 
+    if (!data || data.length === 0) {
+        chartContainer.innerHTML = '<div class="text-muted text-center">Sin datos para graficar.</div>';
+        return;
+    }
+
+    // A. PREPARAR DATOS (Usamos 'totalParticipantes' para el gráfico de impacto)
+    // Ordenamos de Mayor a Menor participación
+    data.sort((a, b) => (b.totalParticipantes || 0) - (a.totalParticipantes || 0));
+
+    const maxVal = data[0].totalParticipantes || 0;
+    const totalGlobal = data.reduce((sum, item) => sum + (item.totalParticipantes || 0), 0);
+
+    // B. GENERAR BARRAS CSS
+    let htmlChart = '';
+    data.forEach((item, index) => {
+        const tParticipantes = item.totalParticipantes || 0;
+        const tEventos = item.totalEventos || 0;
+        const tipo = item.tipoActividad || 'Otro';
+
+        // Porcentajes
+        const widthVisual = maxVal > 0 ? (tParticipantes / maxVal) * 100 : 0;
+        const percentReal = totalGlobal > 0 ? ((tParticipantes / totalGlobal) * 100).toFixed(1) : 0;
+        
+        // Estilo: El primero (líder) en azul fuerte, el resto más suave
+        const barColor = index === 0 ? 'bg-primary' : 'bg-secondary bg-opacity-50';
+
+        htmlChart += `
+            <div class="mb-3">
+                <div class="d-flex justify-content-between mb-1 small">
+                    <div>
+                        <span class="fw-bold text-dark">${tipo}</span>
+                        <span class="badge bg-light text-dark border ms-2" style="font-size:0.7em">${tEventos} ev.</span>
+                    </div>
+                    <span class="text-muted">${tParticipantes} (${percentReal}%)</span>
+                </div>
+                <div class="progress" style="height: 10px;">
+                    <div class="progress-bar ${barColor}" role="progressbar" 
+                         style="width: ${widthVisual}%" 
+                         aria-valuenow="${tParticipantes}" aria-valuemin="0" aria-valuemax="${maxVal}">
+                    </div>
+                </div>
+            </div>`;
+    });
+    chartContainer.innerHTML = htmlChart;
+
+    // C. GENERAR INSIGHT (Mensaje a la derecha)
+    if (lblPercent && lblText) {
+        if (data.length > 1) {
+            const lider = data[0];
+            const resto = data.slice(1);
+            // Promedio del resto
+            const sumaResto = resto.reduce((sum, i) => sum + (i.totalParticipantes || 0), 0);
+            const promedioResto = sumaResto / resto.length;
+            
+            let diff = 0;
+            if (promedioResto > 0) {
+                diff = ((lider.totalParticipantes - promedioResto) / promedioResto) * 100;
+            } else {
+                diff = 100;
+            }
+
+            lblPercent.innerText = `+${Math.round(diff)}%`;
+            lblPercent.className = "display-5 fw-bold text-success mb-0"; 
+            lblText.innerHTML = `Las actividades tipo <strong>${lider.tipoActividad}</strong> atraen más gente que el promedio del resto.`;
+        } else {
+            lblPercent.innerText = "100%";
+            lblText.innerHTML = `Dominio total de <strong>${data[0].tipoActividad}</strong>.`;
+        }
     }
 }
 

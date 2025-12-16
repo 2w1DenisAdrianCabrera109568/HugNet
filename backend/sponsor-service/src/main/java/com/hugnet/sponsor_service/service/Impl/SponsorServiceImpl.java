@@ -99,9 +99,7 @@ public class SponsorServiceImpl implements SponsorService {
 
         // 2. Mapeamos a DTO
         return aportes.stream()
-                .map(aporte -> {
-                    // Asumiendo que ActivitySponsor tiene @ManyToOne hacia Sponsor
-                    // Si no, tendrías que buscar el sponsor por ID aquí.
+                .map(aporte -> {                   
                     Sponsor sponsor = aporte.getSponsor(); 
                     
                     return new SponsorReportDTO(

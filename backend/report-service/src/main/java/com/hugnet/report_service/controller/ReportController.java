@@ -47,8 +47,8 @@ public class ReportController {
         return ResponseEntity.ok(reportService.getParticipationType(token, userId, userRol));
     }
 
-    // Endpoint para Reporte Financiero (Balance)
- @GetMapping("/financial-balance")
+    //Endpoint para Reporte Financiero (Balance)
+     @GetMapping("/financial-balance")
     @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<List<BalanceReportDTO>> getBalanceReport(
             @RequestHeader("Authorization") String token,
@@ -57,10 +57,37 @@ public class ReportController {
     ) {
         return ResponseEntity.ok(reportService.getBalanceReport(token, userId, userRol));
     }
+     
+    // Endpoint para Detalle de Balance de una Actividad
+@GetMapping("/balance-detail/{activityId}")
+    public ResponseEntity<?> getBalanceDetail(
+            @PathVariable Long activityId,
+            @RequestHeader(value = "Authorization", required = false) String token, // required=false para probar si llega
+            @RequestHeader(value = "X-User-Id", required = false) String userId,
+            @RequestHeader(value = "X-User-Rol", required = false) String userRol
+    ) {
+        log.info(">>> RECIBIDA PETICIÓN DETALLE para Actividad ID: {}", activityId);
+        log.info(">>> HEADERS: Auth present? {}, UserID: {}, Role: {}", (token != null), userId, userRol);
 
+        try {
+            // Llamamos al servicio
+            BalanceReportDTO reporte = reportService.getBalanceDetail(activityId, token, userId, userRol);
+            return ResponseEntity.ok(reporte);
+
+        } catch (Exception e) {
+            // ESTO ES LO QUE NECESITAMOS VER
+            log.error(">>> ERROR FATAL EN CONTROLADOR DETALLE:", e);
+            e.printStackTrace(); 
+            
+            // Devolvemos el error al Postman/Navegador para verlo ahí también
+            return ResponseEntity.status(500).body("ERROR INTERNO: " + e.getMessage() + " | Clase: " + e.getClass().getName());
+        }
+    }
+    
+    
     // Endpoint para Reporte de Stock (Donaciones + Intercambios)
     @GetMapping("/stock")
-    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'GEST_DONACIONES')")
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'DONATION_MANAGER')")
     /* public ResponseEntity<List<StockItemDTO>> getStockReport(
             @RequestHeader("Authorization") String token) */ 
     public ResponseEntity<List<StockItemDTO>> getStockReport(
