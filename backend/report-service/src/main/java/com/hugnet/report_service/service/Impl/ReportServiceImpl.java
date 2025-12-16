@@ -5,19 +5,26 @@ import com.hugnet.report_service.dto.AttendanceReportDTO;
 import com.hugnet.report_service.dto.BalanceReportDTO;
 import com.hugnet.report_service.dto.DonationData;
 import com.hugnet.report_service.dto.ExchangeData;
+
+import com.hugnet.report_service.dto.ExpenseData;
 import com.hugnet.report_service.dto.ActivityAttendanceData;
+import com.hugnet.report_service.dto.ActivityData;
 import com.hugnet.report_service.dto.ParticipantDetailDTO;
 import com.hugnet.report_service.dto.ReporteParticipacionDTO;
+import com.hugnet.report_service.dto.SponsorData;
 import com.hugnet.report_service.dto.StockItemDTO;
 import com.hugnet.report_service.dto.UserData;
 import com.hugnet.report_service.dto.UserRankingDTO;
 import com.hugnet.report_service.service.ReportService;
-import lombok.Data;
+
 import lombok.RequiredArgsConstructor;
+
 import lombok.extern.slf4j.Slf4j;
+
 
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -34,6 +41,7 @@ public class ReportServiceImpl implements ReportService {
 
     private final WebClient.Builder webClientBuilder;
 
+   
 
     // --- HU-19: Reporte de asistencia por actividad ---
     @Override
@@ -160,7 +168,7 @@ public class ReportServiceImpl implements ReportService {
     }
     
     // --- HU-21/22: Reporte de Balance Financiero por Evento ---
-@Override
+    /* @Override
     public List<BalanceReportDTO> getBalanceReport(String token, String userId, String userRol) {
         log.info("Generando reporte de balance financiero...");
 
@@ -268,8 +276,243 @@ public class ReportServiceImpl implements ReportService {
         }
 
         return balanceReport;
+    } */
+    // --- HU-21/22: Detalle de Balance Financiero por Evento ---
+    @Override
+    public List<BalanceReportDTO> getBalanceReport(String token, String userId, String userRol) {
+    log.info("Generando reporte general de balances (Tabla Principal)");
+
+    if (webClientBuilder == null) throw new RuntimeException("WebClient no inicializado.");
+    WebClient client = webClientBuilder.build();
+
+    // ---------------------------------------------------------
+    // PASO 1: OBTENER TODOS LOS DATOS (3 Llamadas HTTP en total)
+    // ---------------------------------------------------------
+
+    // A. Traer todas las Actividades
+    ActivityData[] activitiesArray;
+    try {
+        activitiesArray = client.get()
+                .uri("http://activity-service:8082/api/activities")
+                .header("Authorization", token)
+                .header("X-User-Id", userId)
+                .header("X-User-Rol", userRol)
+                .retrieve()
+                .bodyToMono(ActivityData[].class)
+                .block();
+    } catch (Exception e) {
+        log.error("Error obteniendo actividades para el reporte", e);
+        return Collections.emptyList(); // Sin actividades no hay reporte
+    }
+    List<ActivityData> actividades = (activitiesArray != null) ? Arrays.asList(activitiesArray) : Collections.emptyList();
+
+    // B. Traer todas las Donaciones
+    DonationData[] donationsArray;
+    try {
+        donationsArray = client.get()
+                .uri("http://donation-service:8084/api/donations")
+                .header("Authorization", token)
+                .header("X-User-Id", userId)
+                .header("X-User-Rol", userRol)
+                .retrieve()
+                .bodyToMono(DonationData[].class)
+                .block();
+    } catch (Exception e) {
+        log.error("Error obteniendo donaciones, se asumen 0", e);
+        donationsArray = new DonationData[0];
+    }
+    List<DonationData> donaciones = (donationsArray != null) ? Arrays.asList(donationsArray) : Collections.emptyList();
+
+    // C. Traer todos los Gastos (GRACIAS AL REFACTOR DE HOY)
+    ExpenseData[] expensesArray;
+    try {
+        expensesArray = client.get()
+                .uri("http://activity-service:8082/api/expenses") // Endpoint nuevo
+                .header("Authorization", token)
+                .header("X-User-Id", userId)
+                .header("X-User-Rol", userRol)
+                .retrieve()
+                .bodyToMono(ExpenseData[].class)
+                .block();
+    } catch (Exception e) {
+        log.error("Error obteniendo gastos, se asumen 0", e);
+        expensesArray = new ExpenseData[0];
+    }
+    List<ExpenseData> gastos = (expensesArray != null) ? Arrays.asList(expensesArray) : Collections.emptyList();
+
+    // ---------------------------------------------------------
+    // PASO 2: PROCESAMIENTO EN MEMORIA (CRUCE DE DATOS)
+    // ---------------------------------------------------------
+    
+    return actividades.stream()
+            .map(activity -> {
+                // Filtrar donaciones de ESTA actividad
+                List<DonationData> susDonaciones = donaciones.stream()
+                        .filter(d -> d.getActivityId() != null && d.getActivityId().equals(activity.getActivityId()))
+                        .collect(Collectors.toList());
+
+                // Filtrar gastos de ESTA actividad
+                List<ExpenseData> susGastos = gastos.stream()
+                        .filter(g -> g.getActivityId()!= null && g.getActivityId().equals(activity.getActivityId()))
+                        .collect(Collectors.toList());
+
+                // Calcular Totales
+                double totalIngresos = susDonaciones.stream()
+                        .filter(d -> "MONETARIA".equalsIgnoreCase(d.getTipoDonacion())) // Solo sumamos dinero
+                        .mapToDouble(d -> d.getMonto() != null ? d.getMonto() : 0.0)
+                        .sum();
+
+                double totalGastos = susGastos.stream()
+                        .mapToDouble(g -> g.getMonto() != null ? g.getMonto() : 0.0)
+                        .sum();
+
+                // Construir DTO para la tabla
+                return BalanceReportDTO.builder()
+                        .tituloActividad(activity.getTitulo())
+                        .actividadId(activity.getActivityId())
+                        .fechaInicio(activity.getFechaInicio()) // Necesario para filtro
+                        .fechaFin(activity.getFechaFin())       // Necesario para filtro
+                        .estado(activity.getEstado())           
+                        .totalIngresosMonetarios(totalIngresos)
+                        .totalGastos(totalGastos)
+                        // Dejamos las listas detalladas vacías o null para no sobrecargar la tabla,
+                        // ya que el detalle se pide en el otro método (getBalanceDetail).
+                        .build();
+            })
+            .collect(Collectors.toList());
+}  
+    
+  @Override
+public BalanceReportDTO getBalanceDetail(Long activityId, String token, String userId, String userRol) {
+    log.info("Generando detalle de balance para Actividad ID: {}", activityId);
+
+    if (webClientBuilder == null) throw new RuntimeException("WebClient no inicializado.");
+    WebClient client = webClientBuilder.build();
+
+    // 1. OBTENER ACTIVIDAD (Petición directa por ID)
+    ActivityData activity;
+    try {
+        activity = client.get()
+                .uri("http://activity-service:8082/api/activities/" + activityId)
+                .header("Authorization", token)
+                .header("X-User-Id", userId)
+                .header("X-User-Rol", userRol)
+                .retrieve()
+                .bodyToMono(ActivityData.class)
+                .block();
+    } catch (Exception e) {
+        log.error("Error obteniendo actividad", e);
+        throw new RuntimeException("No se pudo obtener la actividad.");
     }
 
+    // 2. OBTENER TODOS LOS GASTOS (GetAll + Filter Stream)
+    ExpenseData[] allExpensesArray;
+    try {
+        allExpensesArray = client.get()
+                .uri("http://activity-service:8082/api/expenses") // Trae todos
+                .header("Authorization", token)
+                .header("X-User-Id", userId)
+                .header("X-User-Rol", userRol)
+                .retrieve()
+                .bodyToMono(ExpenseData[].class)
+                .block();
+    } catch (Exception e) {
+        allExpensesArray = new ExpenseData[0];
+    }
+    
+    // Filtro en memoria: Por ID Actividad
+    List<ExpenseData> gastos = (allExpensesArray != null) 
+            ? Arrays.stream(allExpensesArray)
+                    .filter(g -> g.getActivityId() != null && g.getActivityId().equals(activityId))
+                    .collect(Collectors.toList())
+            : Collections.emptyList();
+
+    // 3. OBTENER TODAS LAS DONACIONES (GetAll + Filter Stream)
+    DonationData[] allDonationsArray;
+    try {
+        allDonationsArray = client.get()
+                .uri("http://donation-service:8084/api/donations") // Trae todas
+                .header("Authorization", token)
+                .header("X-User-Id", userId)
+                .header("X-User-Rol", userRol)
+                .retrieve()
+                .bodyToMono(DonationData[].class)
+                .block();
+    } catch (Exception e) {
+        allDonationsArray = new DonationData[0];
+    }
+
+    // Filtro 1: Pertenecen a esta actividad
+    List<DonationData> donacionesActividad = (allDonationsArray != null) 
+            ? Arrays.stream(allDonationsArray)
+                    .filter(d -> d.getActivityId() != null && d.getActivityId().equals(activityId))
+                    .collect(Collectors.toList())
+            : Collections.emptyList();
+
+    // 4. OBTENER SPONSORS (Usando Endpoint Específico - ESTRATEGIA HIBRIDA)
+    // Usamos el endpoint específico porque trae datos de la tabla intermedia
+    SponsorData[] sponsorsArray; 
+    try {
+        // Asumiendo que el controller de user-service está mapeado en /api/sponsors
+        String uriSponsors = "http://sponsor-service:8083/api/sponsors/activity/" + activityId + "/report";
+        
+        sponsorsArray = client.get()
+                .uri(uriSponsors)
+                .header("Authorization", token)
+                .header("X-User-Id", userId)
+                .header("X-User-Rol", userRol)
+                .retrieve()
+                .bodyToMono(SponsorData[].class) // Asegúrate de tener este DTO en este servicio
+                .block();
+    } catch (Exception e) {
+        log.warn("No se pudieron obtener sponsors o no hay sponsors para la actividad", e);
+        sponsorsArray = new SponsorData[0];
+    }
+    List<SponsorData> sponsors = (sponsorsArray != null) ? Arrays.asList(sponsorsArray) : Collections.emptyList();
+
+
+    // --- PROCESAMIENTO Y CÁLCULOS (Aplicando Filtros de Estado) ---
+
+    // Filtro CRITICO: Solo sumamos lo "APROBADA"
+    List<DonationData> monetarias = donacionesActividad.stream()
+            .filter(d -> "MONETARIA".equalsIgnoreCase(d.getTipoDonacion()))
+            .filter(d -> "APROBADA".equalsIgnoreCase(d.getEstado())) 
+            .collect(Collectors.toList());
+    
+    // Filtro: Bienes APROBADOS (para mostrar en lista confirmada)
+    List<DonationData> bienes = donacionesActividad.stream()
+            .filter(d -> "ESPECIE".equalsIgnoreCase(d.getTipoDonacion()))
+            .filter(d -> "APROBADA".equalsIgnoreCase(d.getEstado()))
+            .collect(Collectors.toList());
+
+    double totalIngresos = monetarias.stream()
+            .mapToDouble(d -> d.getMonto() != null ? d.getMonto() : 0.0)
+            .sum();
+
+    double totalGastos = gastos.stream()
+            .mapToDouble(g -> g.getMonto() != null ? g.getMonto() : 0.0)
+            .sum();
+
+    return BalanceReportDTO.builder()
+            .tituloActividad(activity != null ? activity.getTitulo() : "Desconocido")
+            .fechaInicio(activity != null ? activity.getFechaInicio() : null)
+            .fechaFin(activity != null ? activity.getFechaFin() : null)
+            .estado(activity != null ? activity.getEstado() : null)
+            
+            .ingresosMonetarios(monetarias)
+            .totalIngresosMonetarios(totalIngresos)
+            
+            .ingresosBienes(bienes) // Verifica que DonationData tenga campo 'descripcion'
+            
+            .egresosGastos(gastos)
+            .totalGastos(totalGastos)
+            
+            .aportesSponsors(sponsors) // Ahora pasamos la lista correcta de DTOs
+            .build();
+}
+
+
+   
     // --- HU-23: Reporte de Stock Unificado (Donaciones + Intercambios) ---
     @Override
     /* public List<StockItemDTO> getStockReport(String token) */ 

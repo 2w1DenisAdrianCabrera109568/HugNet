@@ -13,6 +13,8 @@ import lombok.NoArgsConstructor;
 public class DonationData {    // public (ya no static)
     private Long id;
     private Double monto;
+    private String descripcionItem;
+    private Integer cantidad;
     private String estado;
     private Long activityId;
     private String tipoDonacion;

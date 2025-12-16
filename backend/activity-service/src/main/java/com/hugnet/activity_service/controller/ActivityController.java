@@ -4,6 +4,7 @@ import com.hugnet.activity_service.dto.ActivityAttendanceDTO;
 import com.hugnet.activity_service.dto.ActivityDTO;
 import com.hugnet.activity_service.dto.ActivityTypeReportDTO;
 import com.hugnet.activity_service.dto.CreateActivityDTO;
+import com.hugnet.activity_service.entity.Expense;
 import com.hugnet.activity_service.service.ActivityService;
 import lombok.*;
 import org.springframework.http.ResponseEntity;
@@ -97,5 +98,7 @@ public class ActivityController {
     public ResponseEntity<List<ActivityTypeReportDTO>> getParticipationStats() {
         return ResponseEntity.ok(activityService.getParticipationStats());
     }
+
+   
 
 }
