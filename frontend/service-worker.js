@@ -2,7 +2,9 @@ const CACHE_NAME = 'hugnet-cache-v1';
 const urlsToCache = [
   './',
   './index.html',
+  './menu.html',
   './dashboard.html',
+  './intercambio.html',
   './css/styles.css', // Si tienes CSS externo
   './js/app.js',
   './manifest.json'

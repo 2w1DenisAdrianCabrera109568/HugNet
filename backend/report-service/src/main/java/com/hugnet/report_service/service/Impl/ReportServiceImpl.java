@@ -32,6 +32,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -532,23 +533,28 @@ public BalanceReportDTO getBalanceDetail(Long activityId, String token, String u
                     .bodyToMono(DonationData[].class)
                     .block();
 
+                    
+
             if (donationsArray != null) {
                 // Filtramos y mapeamos a StockItemDTO
                 List<StockItemDTO> donacionesStock = Arrays.stream(donationsArray)
                         // Solo nos interesan las donaciones MATERIALES que ya fueron APROBADAS
-                        .filter(d -> "ESPECIE".equalsIgnoreCase(d.getTipoDonacion()) 
-                                  && "APROBADO".equalsIgnoreCase(d.getEstado())) 
+                        .filter(d -> "ESPECIE".equalsIgnoreCase(d.getTipoDonacion()))
+                        .filter(d -> "APROBADA".equalsIgnoreCase(Optional.ofNullable(d.getEstado()).orElse("").trim()
+))                                                    
                         .map(d -> new StockItemDTO(
-                                d.getTipoDonacion() + " - ID: " + d.getId(), // Descripción genérica si no tiene título
+                                d.getDescripcion(), // Descripción genérica si no tiene título
                                 "DONACION",
                                 d.getEstado(),
+                                d.getCantidad(),
                                 "N/A", // Fecha, si el DTO de donación no la trae
-                                "VARIOS"
+                                d.getItemType()
                         ))
                         .collect(Collectors.toList());
                 
                 stockUnificado.addAll(donacionesStock);
             }
+            
         } catch (Exception e) {
             log.error("Error al obtener stock de donaciones", e);
             // No lanzamos error para permitir que se cargue al menos la otra parte del reporte
@@ -558,7 +564,7 @@ public BalanceReportDTO getBalanceDetail(Long activityId, String token, String u
         try {
             ExchangeData[] exchangesArray = webClientBuilder.build()
                     .get()
-                    // NOTA: Asumo que este endpoint existe en tu exchange-service (Sprint 3)
+                    
                     .uri("http://exchange-service:8086/api/exchanges") 
                     .header("Authorization", token)
                     .header("X-User-Id", userId)   // <--- AGREGAR POR PREVENCIÓN
@@ -569,10 +575,12 @@ public BalanceReportDTO getBalanceDetail(Long activityId, String token, String u
 
             if (exchangesArray != null) {
                 List<StockItemDTO> intercambiosStock = Arrays.stream(exchangesArray)
+                        .filter(e -> "BIEN".equalsIgnoreCase(e.getItemType()))
                         .map(e -> new StockItemDTO(
                                 e.getTitulo(),
                                 "INTERCAMBIO",
                                 e.getEstado(),
+                                 1, // Asumimos 1 por ítem de intercambio
                                 e.getFechaPublicacion(),
                                 e.getItemType()
                         ))

@@ -22,6 +22,7 @@ public class DonationController {
 
     @GetMapping
     @PreAuthorize("hasAnyRole('DONATION_MANAGER', 'ADMINISTRADOR')")
+    //@PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<DonationDTO>> getStock() {
         return ResponseEntity.ok(donationService.getAllDonations());
     }
@@ -49,8 +50,13 @@ public class DonationController {
      * Endpoint para que el Gestor vea las donaciones pendientes.
      */
     @GetMapping("/pending")
-    @PreAuthorize("hasRole('DONATION_MANAGER', 'ADMINISTRADOR')")
-    public ResponseEntity<List<DonationDTO>> getPendingDonations() {
+    @PreAuthorize("hasAnyRole('DONATION_MANAGER', 'ADMINISTRADOR')")
+    //@PreAuthorize("isAuthenticated()")
+    public ResponseEntity<List<DonationDTO>> getPendingDonations(
+                 @RequestHeader("Authorization") String token,
+            @RequestHeader("X-User-Id") String userId,   // <--- NUEVO
+            @RequestHeader("X-User-Rol") String userRol 
+    ) {
         List<DonationDTO> pending = donationService.getPendingDonations();
         return ResponseEntity.ok(pending);
     }
@@ -59,7 +65,7 @@ public class DonationController {
      * Endpoint para que el Gestor APRUEBE una donación.
      */
     @PatchMapping("/{id}/approve")
-    @PreAuthorize("hasRole('DONATION_MANAGER', 'ADMINISTRADOR')")
+    @PreAuthorize("hasAnyRole('DONATION_MANAGER', 'ADMINISTRADOR')")
     public ResponseEntity<DonationDTO> approveDonation(
             @PathVariable("id") Long donationId,
             @RequestHeader("X-User-Id") Long gestorId
@@ -72,7 +78,7 @@ public class DonationController {
      * Endpoint para que el Gestor RECHACE una donación.
      */
     @PatchMapping("/{id}/reject")
-    @PreAuthorize("hasRole('DONATION_MANAGER', 'ADMINISTRADOR')")
+    @PreAuthorize("hasAnyRole('DONATION_MANAGER', 'ADMINISTRADOR')")
     public ResponseEntity<DonationDTO> rejectDonation(
             @PathVariable("id") Long donationId,
             @RequestHeader("X-User-Id") Long gestorId

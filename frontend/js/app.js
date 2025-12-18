@@ -1755,7 +1755,7 @@ function clearFilters() {
 }
 // Función para cargar el reporte completo
 async function fetchBalanceReport() {
-    const tbody = document.getElementById("balanceTableBody"); // Asegúrate que este ID coincida en tu HTML
+    const tbody = document.getElementById("balanceTableBody"); 
     const headers = getAuthHeaders(); 
     
     // Loader
@@ -2088,7 +2088,7 @@ function renderStockTable(items, container) {
         }
 
         let estadoClass = "text-muted";
-        if (item.estado === "DISPONIBLE" || item.estado === "APROBADO") {
+        if (item.estado === "DISPONIBLE" || item.estado === "APROBADA") {
             estadoClass = "text-success fw-bold";
         } else if (item.estado === "RESERVADO") {
             estadoClass = "text-warning fw-bold";
@@ -2104,7 +2104,7 @@ function renderStockTable(items, container) {
             </td>
             <td><span class="badge bg-light text-dark border">${item.categoria}</span></td>
             <td class="${estadoClass}">${item.estado}</td>
-            
+            <td><small class="text-muted">${item.cantidad}</small></td>
             <td><small class="text-muted">${item.fechaIngreso}</small></td>
         </tr>`;
     });

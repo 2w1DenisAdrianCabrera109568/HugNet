@@ -10,7 +10,8 @@ import lombok.NoArgsConstructor;
 public class StockItemDTO {
     private String descripcion;     // Nombre del ítem
     private String origen;          // "DONACION" o "INTERCAMBIO"
-    private String estado;          // DISPONIBLE, RESERVADO, ENTREGADO
+    private String estado;  
+    private Integer cantidad;        // DISPONIBLE, RESERVADO, ENTREGADO
     private String fechaIngreso;    // Fecha de creación (como String para simplificar reporte)
     private String categoria;       // (Opcional) Tipo de bien
 }
