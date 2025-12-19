@@ -413,134 +413,159 @@ async function deleteMyAccount() {
 }
 
 // --- ACTIVIDADES ---
-
+let activities = [];
 async function loadActivitiesDashboard(title) {
-    // 1. Actualizar el título principal del Dashboard (si lo usas fuera del content-area)
     const titleEl = document.getElementById("content-title");
     if (titleEl) titleEl.textContent = title;
 
-    // 2. Preparar el área de contenido
     const contentArea = document.getElementById("content-area");
     const template = document.getElementById("activities-template");
     
-    // Limpiamos lo que había antes
     contentArea.innerHTML = "";
-
-    // 3. Clonar el template e inyectarlo
-    // (Esto es más limpio que usar innerHTML con strings gigantes)
     const clone = template.content.cloneNode(true);
     contentArea.appendChild(clone);
 
-    // 4. Lógica de Rol: Mostrar botón "Crear" si es Coordinador
-    const userRol = localStorage.getItem("userRol");
-    const btnCreate = document.getElementById("btn-create-activity");
-    
-    if (btnCreate && userRol === 'COORDINADOR') {
-        btnCreate.classList.remove('d-none');
+    const tableBody = document.getElementById("activityTableBody");
+
+    // 2. Configurar Listeners una sola vez al cargar el dashboard
+    const searchInput = document.getElementById("search-activity");
+    const filterCheck = document.getElementById("filterActiveActivities");
+
+    if (searchInput) {
+        searchInput.addEventListener("input", () => {
+            renderActivities(activities, tableBody);
+        });
     }
 
-    // 5. Cargar los datos
-    // Pasamos el elemento tbody que acabamos de crear al fetch
-    const tableBody = document.getElementById("activityTableBody");
+    if (filterCheck) {
+        filterCheck.addEventListener("change", () => {
+            renderActivities(activities, tableBody);
+        });
+    }
+
+    // Lógica de Rol
+    const userRol = localStorage.getItem("userRol");
+    const btnCreate = document.getElementById("btn-create-activity");
+    if (btnCreate && userRol === 'COORDINADOR' || userRol === 'ADMINISTRADOR') {
+        btnCreate.classList.remove('d-none');
+    }
+    const btnSponsor = document.getElementById("btn-create-sponsor");
+    if (btnSponsor && userRol === 'COORDINADOR' || userRol === 'ADMINISTRADOR') {
+        btnSponsor.classList.remove('d-none');
+    }
+
+    // 3. Cargar los datos
     if (tableBody) {
         await fetchActivities(tableBody);
     }
 }
 
+
 async function fetchActivities(tableBody) {
-  const headers = getAuthHeaders();
-  if (!headers) return;
-  try {
-    const res = await fetch(`${API_URL}/activities`, { headers });
-    if (res.ok) {
-        const activities = await res.json();
-        renderActivities(activities, tableBody);
-    } else { throw new Error(); }
-  } catch (e) { tableBody.innerHTML = `<tr><td colspan="6" class="text-danger">Error carga.</td></tr>`; }
+    const headers = getAuthHeaders();
+    if (!headers) return;
+    try {
+        const res = await fetch(`${API_URL}/activities`, { headers });
+        if (res.ok) {
+            // ERROR CORREGIDO: Asignamos a la variable global, no creamos una nueva const
+            activities = await res.json(); 
+            renderActivities(activities, tableBody);
+        } else { 
+            throw new Error(); 
+        }
+    } catch (e) { 
+        tableBody.innerHTML = `<tr><td colspan="6" class="text-danger">Error carga.</td></tr>`; 
+    }
 }
 
 function renderActivities(list, tableBody) {
+    if (!tableBody) return;
+
     const role = localStorage.getItem("userRol");
+    const searchTerm = document.getElementById("search-activity")?.value.toLowerCase() || "";
+    const hideFinished = document.getElementById("filterActiveActivities")?.checked;
+    
     tableBody.innerHTML = "";
+    
+    // --- FILTRADO CONSOLIDADO ---
+    let filtered = list.filter(act => {
+        // 1. Filtro por Rol
+        if (role === 'USUARIO') {
+            if (['FINALIZADO', 'PENDIENTE', 'SUSPENDIDO'].includes(act.estado)) return false;
+        }
+        if (role === 'COORDINADOR') {
+            if (act.estado === 'PENDIENTE') return false;
+        }
 
-    // 1. Filtros de lógica de negocio (Mantenemos tu lógica original)
-    let filtered = list;
-    if (role === 'USUARIO') {
-        filtered = list.filter(a => ['ABIERTO', 'EN_CURSO'].includes(a.estado));
-    }
-    // Nota: Si el coordinador necesita ver sus eventos pendientes para editarlos, podrías quitar este filtro.
-    // Por ahora lo dejamos como lo tenías:
-    if (role === 'COORDINADOR') {
-        filtered = list.filter(a => a.estado !== 'PENDIENTE');
-    }
+        // 2. Filtro por Buscador (Título)
+        if (searchTerm && !act.titulo?.toLowerCase().includes(searchTerm)) {
+            return false;
+        }
 
-    if (!filtered || filtered.length === 0) {
-        tableBody.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-4">No hay actividades disponibles para mostrar.</td></tr>`;
+        // 3. Filtro Checkbox (Ocultar finalizadas/suspendidas)
+        if (hideFinished) {
+            if (['FINALIZADO', 'FINALIZADA', 'SUSPENDIDO', 'SUSPENDIDA'].includes(act.estado)) {
+                return false;
+            }
+        }
+
+        return true;
+    });
+
+    // --- ORDENACIÓN ---
+    filtered.sort((a, b) => {
+        const dateA = a.fechaInicio ? new Date(a.fechaInicio).getTime() : Infinity;
+        const dateB = b.fechaInicio ? new Date(b.fechaInicio).getTime() : Infinity;
+        return dateA - dateB;
+    });
+
+    // --- RENDERIZADO ---
+    if (filtered.length === 0) {
+        tableBody.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-4">No hay actividades que coincidan con los filtros.</td></tr>`;
         return;
     }
 
     filtered.forEach(act => {
         const tr = document.createElement("tr");
-        tr.className = "align-middle"; // Alineación vertical centrada
+        tr.className = "align-middle";
         
-        // Formateo de fecha
         const date = act.fechaInicio ? new Date(act.fechaInicio).toLocaleDateString() : "-";
 
-        // Lógica de Badges (Colores según estado)
         let badgeClass = "bg-secondary";
-        if (act.estado === 'ABIERTO' || act.estado === 'APROBADA') badgeClass = "bg-success";
+        if (act.estado === 'ABIERTO' || act.estado === 'APROBADA' || act.estado === 'EN_CURSO') badgeClass = "bg-success";
         if (act.estado === 'PENDIENTE') badgeClass = "bg-warning text-dark";
         if (act.estado === 'SUSPENDIDO' || act.estado === 'RECHAZADA') badgeClass = "bg-danger";
 
-        // Lógica de Botones (Aquí implementamos el Dropdown)
         let btns = '';
-
         if (role === 'ADMINISTRADOR') {
-            // Admin: Aprobar / Rechazar (Mantenemos tu función validateActivity)
             if (act.estado === 'PENDIENTE') {
                 btns = `
                 <div class="d-flex gap-1">
-                    <button class="btn btn-sm btn-success" title="Aprobar" onclick="validateActivity(${act.activityId}, 'ABIERTO')"><i class="bi bi-check-lg"></i></button>
-                    <button class="btn btn-sm btn-danger" title="Rechazar" onclick="validateActivity(${act.activityId}, 'SUSPENDIDO')"><i class="bi bi-x-lg"></i></button>
+                    <button class="btn btn-sm btn-success" onclick="validateActivity(${act.activityId}, 'ABIERTO')"><i class="bi bi-check-lg"></i></button>
+                    <button class="btn btn-sm btn-danger" onclick="validateActivity(${act.activityId}, 'SUSPENDIDO')"><i class="bi bi-x-lg"></i></button>
                 </div>`;
             } else {
                 btns = `<small class="text-muted fst-italic">Gestionado</small>`;
             }
-
         } else if (role === 'COORDINADOR') {
-            // --- NUEVO: MENÚ DROPDOWN (3 PUNTITOS) ---
             btns = `
                 <div class="dropdown">
-                    <button class="btn btn-sm btn-light border" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <button class="btn btn-sm btn-light border" type="button" data-bs-toggle="dropdown">
                         <i class="bi bi-three-dots-vertical"></i>
                     </button>
                     <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" href="#" onclick="openAttendeesModal(${act.activityId})">
-                            <i class="bi bi-people me-2"></i>Ver Asistentes
-                        </a></li>
-                        
-                        <li><a class="dropdown-item" href="#" onclick="openAddSponsorModal(${act.activityId})">
-                            <i class="bi bi-cash-coin me-2"></i>Asignar Sponsor
-                        </a></li>
-                        
+                        <li><a class="dropdown-item" href="#" onclick="openAttendeesModal(${act.activityId})"><i class="bi bi-people me-2"></i>Asistentes</a></li>
+                        <li><a class="dropdown-item" href="#" onclick="openAddSponsorModal(${act.activityId})"><i class="bi bi-cash-coin me-2"></i>Sponsor</a></li>
                         <li><hr class="dropdown-divider"></li>
-                        
-                        <li><a class="dropdown-item text-danger" href="#" onclick="validateActivity(${act.activityId}, 'SUSPENDIDO')">
-                            <i class="bi bi-trash me-2"></i>Cancelar Evento
-                        </a></li>
+                        <li><a class="dropdown-item text-danger" href="#" onclick="validateActivity(${act.activityId}, 'SUSPENDIDO')"><i class="bi bi-trash me-2"></i>Cancelar</a></li>
                     </ul>
-                </div>
-            `;
-
+                </div>`;
         } else {
-            // Rol Usuario / Prestador: Botón de participar (Mantenemos joinActivity)
-            // Agregamos validación visual por si acaso
             if (act.estado === 'ABIERTO' || act.estado === 'APROBADA') {
                 btns = `<button class="btn btn-sm btn-outline-primary" onclick="joinActivity(${act.activityId})">Participar</button>`;
             }
         }
 
-        // Construcción de la fila
         tr.innerHTML = `
             <td class="fw-bold">${act.activityId}</td>
             <td>${act.titulo}</td>
@@ -549,7 +574,6 @@ function renderActivities(list, tableBody) {
             <td><span class="badge ${badgeClass}">${act.estado}</span></td>
             <td class="text-end">${btns}</td>
         `;
-        
         tableBody.appendChild(tr);
     });
 }
@@ -640,7 +664,69 @@ async function submitCreateActivity() {
         Swal.fire('Error', 'Error de conexión.', 'error');
     }
 }
+// --- CREACIÓN DE SPONSORS ---
+function openCreateSponsorModal() {
+    // 1. Limpiar el formulario
+    document.getElementById('createSponsorForm').reset();
+    
+    // 2. Mostrar el modal
+    const modalEl = document.getElementById('createSponsorModal');
+    const modal = new bootstrap.Modal(modalEl);
+    modal.show();
+}
 
+// --- CREACIÓN DE SPONSORS ---
+async function submitCreateSponsor() {
+    // 1. Capturar datos de los inputs
+    const nombre = document.getElementById('spoNombre').value;
+    const tipo = document.getElementById('spoTipo').value;
+    const email = document.getElementById('spoEmail').value;
+    const telefono = document.getElementById('spoTelefono').value;
+
+    // 2. Validaciones básicas
+    if (!nombre || !tipo || !email) {
+        Swal.fire('Atención', 'Por favor completa el nombre, tipo y email.', 'warning');
+        return;
+    }
+
+    // 3. Payload (DTO)
+    const payload = {
+        nombre: nombre,
+        tipo: tipo,
+        email: email,
+        telefono: telefono
+    };
+
+    try {
+        // 4. Configurar headers con Token (usando tu función getAuthHeaders)
+        const headers = getAuthHeaders();
+        headers['Content-Type'] = 'application/json';
+
+        const res = await fetch(`${API_URL}/sponsors`, { // Ajusta /sponsors segun tu RequestMapping
+            method: 'POST',
+            headers: headers,
+            body: JSON.stringify(payload)
+        });
+
+        if (res.ok) {
+            // Éxito: Cerrar modal
+            const modalEl = document.getElementById('createSponsorModal');
+            const modal = bootstrap.Modal.getInstance(modalEl);
+            modal.hide();
+
+            await Swal.fire('¡Registrado!', 'El sponsor ha sido creado con éxito.', 'success');
+            
+            // Opcional: Si tienes una lista de sponsors abierta, recargarla aquí
+        } else {
+            const errorTxt = await res.text();
+            console.error("Error backend:", errorTxt);
+            Swal.fire('Error', 'No se pudo registrar el sponsor: ' + errorTxt, 'error');
+        }
+    } catch (e) {
+        console.error("Error de conexión:", e);
+        Swal.fire('Error', 'Error de conexión con el servidor.', 'error');
+    }
+}
 // --- MÓDULO: GESTIÓN DE USUARIOS (ADMIN) ---
 
 async function loadUsersPage() {
